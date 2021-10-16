@@ -40,43 +40,37 @@
 
 #include "fcl/math/bv/OBBRSS.h"
 
-namespace fcl
-{
+namespace fcl {
 
 //==============================================================================
-extern template
-class FCL_EXPORT OBBRSS<double>;
+extern template class FCL_EXPORT OBBRSS<double>;
 
 //==============================================================================
-extern template
-OBBRSS<double> translate(const OBBRSS<double>& bv, const Vector3<double>& t);
+extern template OBBRSS<double> translate(const OBBRSS<double>& bv,
+                                         const Vector3<double>& t);
 
 //==============================================================================
 template <typename S>
-bool OBBRSS<S>::overlap(const OBBRSS<S>& other) const
-{
+bool OBBRSS<S>::overlap(const OBBRSS<S>& other) const {
   return obb.overlap(other.obb);
 }
 
 //==============================================================================
 template <typename S>
 bool OBBRSS<S>::overlap(const OBBRSS<S>& other,
-                             OBBRSS<S>& /*overlap_part*/) const
-{
+                        OBBRSS<S>& /*overlap_part*/) const {
   return overlap(other);
 }
 
 //==============================================================================
 template <typename S>
-bool OBBRSS<S>::contain(const Vector3<S>& p) const
-{
+bool OBBRSS<S>::contain(const Vector3<S>& p) const {
   return obb.contain(p);
 }
 
 //==============================================================================
 template <typename S>
-OBBRSS<S>& OBBRSS<S>::operator +=(const Vector3<S>& p)
-{
+OBBRSS<S>& OBBRSS<S>::operator+=(const Vector3<S>& p) {
   obb += p;
   rss += p;
   return *this;
@@ -84,16 +78,14 @@ OBBRSS<S>& OBBRSS<S>::operator +=(const Vector3<S>& p)
 
 //==============================================================================
 template <typename S>
-OBBRSS<S>& OBBRSS<S>::operator +=(const OBBRSS<S>& other)
-{
+OBBRSS<S>& OBBRSS<S>::operator+=(const OBBRSS<S>& other) {
   *this = *this + other;
   return *this;
 }
 
 //==============================================================================
 template <typename S>
-OBBRSS<S> OBBRSS<S>::operator +(const OBBRSS<S>& other) const
-{
+OBBRSS<S> OBBRSS<S>::operator+(const OBBRSS<S>& other) const {
   OBBRSS<S> result;
   result.obb = obb + other.obb;
   result.rss = rss + other.rss;
@@ -102,84 +94,75 @@ OBBRSS<S> OBBRSS<S>::operator +(const OBBRSS<S>& other) const
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::width() const
-{
+S OBBRSS<S>::width() const {
   return obb.width();
 }
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::height() const
-{
+S OBBRSS<S>::height() const {
   return obb.height();
 }
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::depth() const
-{
+S OBBRSS<S>::depth() const {
   return obb.depth();
 }
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::volume() const
-{
+S OBBRSS<S>::volume() const {
   return obb.volume();
 }
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::size() const
-{
+S OBBRSS<S>::size() const {
   return obb.size();
 }
 
 //==============================================================================
 template <typename S>
-const Vector3<S> OBBRSS<S>::center() const
-{
+const Vector3<S> OBBRSS<S>::center() const {
   return obb.center();
 }
 
 //==============================================================================
 template <typename S>
-S OBBRSS<S>::distance(const OBBRSS<S>& other,
-                                Vector3<S>* P, Vector3<S>* Q) const
-{
+S OBBRSS<S>::distance(const OBBRSS<S>& other, Vector3<S>* P,
+                      Vector3<S>* Q) const {
+  // std::cout << "DISTANCE OBRSS\n";
   return rss.distance(other.rss, P, Q);
 }
 
 //==============================================================================
 template <typename S, typename DerivedA, typename DerivedB>
 bool overlap(const Eigen::MatrixBase<DerivedA>& R0,
-             const Eigen::MatrixBase<DerivedB>& T0,
-             const OBBRSS<S>& b1, const OBBRSS<S>& b2)
-{
+             const Eigen::MatrixBase<DerivedB>& T0, const OBBRSS<S>& b1,
+             const OBBRSS<S>& b2) {
+  std::cout << "OVERLAP OBRSS\n";
   return overlap(R0, T0, b1.obb, b2.obb);
 }
 
 //==============================================================================
 template <typename S, typename DerivedA, typename DerivedB>
-S distance(
-    const Eigen::MatrixBase<DerivedA>& R0,
-    const Eigen::MatrixBase<DerivedB>& T0,
-    const OBBRSS<S>& b1, const OBBRSS<S>& b2,
-    Vector3<S>* P, Vector3<S>* Q)
-{
+S distance(const Eigen::MatrixBase<DerivedA>& R0,
+           const Eigen::MatrixBase<DerivedB>& T0, const OBBRSS<S>& b1,
+           const OBBRSS<S>& b2, Vector3<S>* P, Vector3<S>* Q) {
+  std::cout << "DISTANCE OBRSS RT\n";
   return distance(R0, T0, b1.rss, b2.rss, P, Q);
 }
 
 //==============================================================================
 template <typename S>
-OBBRSS<S> translate(const OBBRSS<S>& bv, const Vector3<S>& t)
-{
+OBBRSS<S> translate(const OBBRSS<S>& bv, const Vector3<S>& t) {
   OBBRSS<S> res(bv);
   res.obb.To += t;
   res.rss.To += t;
   return res;
 }
 
-} // namespace fcl
+}  // namespace fcl
 
 #endif

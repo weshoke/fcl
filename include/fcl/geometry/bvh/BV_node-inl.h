@@ -40,78 +40,60 @@
 
 #include "fcl/geometry/bvh/BV_node.h"
 
-namespace fcl
-{
+namespace fcl {
 
 //==============================================================================
 template <typename BV>
-bool BVNode<BV>::overlap(const BVNode& other) const
-{
+bool BVNode<BV>::overlap(const BVNode& other) const {
+  std::cout << "BVNode<BV>::\n";
   return bv.overlap(other.bv);
 }
 
 //==============================================================================
 template <typename BV>
-typename BVNode<BV>::S BVNode<BV>::distance(
-    const BVNode& other, Vector3<S>* P1, Vector3<S>* P2) const
-{
+typename BVNode<BV>::S BVNode<BV>::distance(const BVNode& other, Vector3<S>* P1,
+                                            Vector3<S>* P2) const {
   return bv.distance(other.bv, P1, P2);
 }
 
 //==============================================================================
 template <typename BV>
-Vector3<typename BVNode<BV>::S> BVNode<BV>::getCenter() const
-{
+Vector3<typename BVNode<BV>::S> BVNode<BV>::getCenter() const {
   return bv.center();
 }
 
 //==============================================================================
 template <typename S, typename BV>
-struct GetOrientationImpl
-{
-  static Matrix3<S> run(const BVNode<BV>& /*node*/)
-  {
+struct GetOrientationImpl {
+  static Matrix3<S> run(const BVNode<BV>& /*node*/) {
     return Matrix3<S>::Identity();
   }
 };
 
 //==============================================================================
 template <typename BV>
-Matrix3<typename BV::S> BVNode<BV>::getOrientation() const
-{
+Matrix3<typename BV::S> BVNode<BV>::getOrientation() const {
   return GetOrientationImpl<typename BV::S, BV>::run(bv);
 }
 
 //==============================================================================
 template <typename S>
-struct GetOrientationImpl<S, OBB<S>>
-{
-  static Matrix3<S> run(const OBB<S>& bv)
-  {
-    return bv.axis;
-  }
+struct GetOrientationImpl<S, OBB<S>> {
+  static Matrix3<S> run(const OBB<S>& bv) { return bv.axis; }
 };
 
 //==============================================================================
 template <typename S>
-struct GetOrientationImpl<S, RSS<S>>
-{
-  static Matrix3<S> run(const RSS<S>& bv)
-  {
-    return bv.axis;
-  }
+struct GetOrientationImpl<S, RSS<S>> {
+  static Matrix3<S> run(const RSS<S>& bv) { return bv.axis; }
 };
 
 //==============================================================================
 template <typename S>
-struct GetOrientationImpl<S, OBBRSS<S>>
-{
-  static Matrix3<S> run(const OBBRSS<S>& bv)
-  {
-    return bv.obb.axis;
-  }
+struct GetOrientationImpl<S, OBBRSS<S>> {
+  static Matrix3<S> run(const OBBRSS<S>& bv) { return bv.obb.axis; }
 };
 
-} // namespace fcl
+}  // namespace fcl
 
 #endif

@@ -38,21 +38,17 @@
 #ifndef FCL_TRAVERSAL_BVHSHAPECOLLISIONTRAVERSALNODE_INL_H
 #define FCL_TRAVERSAL_BVHSHAPECOLLISIONTRAVERSALNODE_INL_H
 
+#include "fcl/common/unused.h"
 #include "fcl/narrowphase/detail/traversal/collision/bvh_shape_collision_traversal_node.h"
 
-#include "fcl/common/unused.h"
+namespace fcl {
 
-namespace fcl
-{
-
-namespace detail
-{
+namespace detail {
 
 //==============================================================================
 template <typename Shape, typename BV>
 BVHShapeCollisionTraversalNode<Shape, BV>::BVHShapeCollisionTraversalNode()
-  : CollisionTraversalNodeBase<typename BV::S>()
-{
+    : CollisionTraversalNodeBase<typename BV::S>() {
   model1 = nullptr;
   model2 = nullptr;
 
@@ -63,36 +59,34 @@ BVHShapeCollisionTraversalNode<Shape, BV>::BVHShapeCollisionTraversalNode()
 
 //==============================================================================
 template <typename Shape, typename BV>
-bool BVHShapeCollisionTraversalNode<Shape, BV>::isFirstNodeLeaf(int b) const
-{
+bool BVHShapeCollisionTraversalNode<Shape, BV>::isFirstNodeLeaf(int b) const {
   return model1->getBV(b).isLeaf();
 }
 
 //==============================================================================
 template <typename Shape, typename BV>
-int BVHShapeCollisionTraversalNode<Shape, BV>::getFirstLeftChild(int b) const
-{
+int BVHShapeCollisionTraversalNode<Shape, BV>::getFirstLeftChild(int b) const {
   return model1->getBV(b).leftChild();
 }
 
 //==============================================================================
 template <typename Shape, typename BV>
-int BVHShapeCollisionTraversalNode<Shape, BV>::getFirstRightChild(int b) const
-{
+int BVHShapeCollisionTraversalNode<Shape, BV>::getFirstRightChild(int b) const {
   return model1->getBV(b).rightChild();
 }
 
 //==============================================================================
 template <typename Shape, typename BV>
-bool BVHShapeCollisionTraversalNode<Shape, BV>::BVTesting(int b1, int b2) const
-{
+bool BVHShapeCollisionTraversalNode<Shape, BV>::BVTesting(int b1,
+                                                          int b2) const {
   FCL_UNUSED(b2);
 
-  if(this->enable_statistics) num_bv_tests++;
+  if (this->enable_statistics) num_bv_tests++;
+  std::cout << "bool BVHShapeCollisionTraversalNode<Shape, BV>::BVTesting\n";
   return !model1->getBV(b1).bv.overlap(model2_bv);
 }
 
-} // namespace detail
-} // namespace fcl
+}  // namespace detail
+}  // namespace fcl
 
 #endif

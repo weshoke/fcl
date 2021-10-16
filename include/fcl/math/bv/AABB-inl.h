@@ -38,104 +38,85 @@
 #ifndef FCL_BV_AABB_INL_H
 #define FCL_BV_AABB_INL_H
 
+#include <iostream>
+
 #include "fcl/math/bv/AABB.h"
 
-namespace fcl
-{
+namespace fcl {
 
 //==============================================================================
-extern template
-class FCL_EXPORT AABB<double>;
+extern template class FCL_EXPORT AABB<double>;
 
 //==============================================================================
 template <typename S>
 AABB<S>::AABB()
-  : min_(Vector3<S>::Constant(std::numeric_limits<S>::max())),
-    max_(Vector3<S>::Constant(-std::numeric_limits<S>::max()))
-{
+    : min_(Vector3<S>::Constant(std::numeric_limits<S>::max())),
+      max_(Vector3<S>::Constant(-std::numeric_limits<S>::max())) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
-AABB<S>::AABB(const Vector3<S>& v) : min_(v), max_(v)
-{
+AABB<S>::AABB(const Vector3<S>& v) : min_(v), max_(v) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
 AABB<S>::AABB(const Vector3<S>& a, const Vector3<S>& b)
-  : min_(a.cwiseMin(b)),
-    max_(a.cwiseMax(b))
-{
+    : min_(a.cwiseMin(b)), max_(a.cwiseMax(b)) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
 AABB<S>::AABB(const AABB<S>& core, const Vector3<S>& delta)
-  : min_(core.min_ - delta),
-    max_(core.max_ + delta)
-{
+    : min_(core.min_ - delta), max_(core.max_ + delta) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
-AABB<S>::AABB(
-    const Vector3<S>& a,
-    const Vector3<S>& b,
-    const Vector3<S>& c)
-  : min_(a.cwiseMin(b).cwiseMin(c)),
-    max_(a.cwiseMax(b).cwiseMax(c))
-{
+AABB<S>::AABB(const Vector3<S>& a, const Vector3<S>& b, const Vector3<S>& c)
+    : min_(a.cwiseMin(b).cwiseMin(c)), max_(a.cwiseMax(b).cwiseMax(c)) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::overlap(const AABB<S>& other) const
-{
-  if ((min_.array() > other.max_.array()).any())
-    return false;
+bool AABB<S>::overlap(const AABB<S>& other) const {
+  std::cout << "AABB<S>::overlap\n";
+  if ((min_.array() > other.max_.array()).any()) return false;
 
-  if ((max_.array() < other.min_.array()).any())
-    return false;
+  if ((max_.array() < other.min_.array()).any()) return false;
 
   return true;
 }
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::contain(const AABB<S>& other) const
-{
-  if ((min_.array() > other.min_.array()).any())
-    return false;
+bool AABB<S>::contain(const AABB<S>& other) const {
+  if ((min_.array() > other.min_.array()).any()) return false;
 
-  if ((max_.array() < other.max_.array()).any())
-    return false;
+  if ((max_.array() < other.max_.array()).any()) return false;
 
   return true;
 }
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::axisOverlap(const AABB<S>& other, int axis_id) const
-{
-  if(min_[axis_id] > other.max_[axis_id]) return false;
+bool AABB<S>::axisOverlap(const AABB<S>& other, int axis_id) const {
+  if (min_[axis_id] > other.max_[axis_id]) return false;
 
-  if(max_[axis_id] < other.min_[axis_id]) return false;
+  if (max_[axis_id] < other.min_[axis_id]) return false;
 
   return true;
 }
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::overlap(const AABB<S>& other, AABB<S>& overlap_part) const
-{
-  if(!overlap(other))
-  {
+bool AABB<S>::overlap(const AABB<S>& other, AABB<S>& overlap_part) const {
+  if (!overlap(other)) {
     return false;
   }
 
@@ -146,21 +127,17 @@ bool AABB<S>::overlap(const AABB<S>& other, AABB<S>& overlap_part) const
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::contain(const Vector3<S>& p) const
-{
-  if ((min_.array() > p.array()).any())
-    return false;
+bool AABB<S>::contain(const Vector3<S>& p) const {
+  if ((min_.array() > p.array()).any()) return false;
 
-  if ((max_.array() < p.array()).any())
-    return false;
+  if ((max_.array() < p.array()).any()) return false;
 
   return true;
 }
 
 //==============================================================================
 template <typename S>
-AABB<S>& AABB<S>::operator +=(const Vector3<S>& p)
-{
+AABB<S>& AABB<S>::operator+=(const Vector3<S>& p) {
   min_ = min_.cwiseMin(p);
   max_ = max_.cwiseMax(p);
   return *this;
@@ -168,8 +145,7 @@ AABB<S>& AABB<S>::operator +=(const Vector3<S>& p)
 
 //==============================================================================
 template <typename S>
-AABB<S>& AABB<S>::operator +=(const AABB<S>& other)
-{
+AABB<S>& AABB<S>::operator+=(const AABB<S>& other) {
   min_ = min_.cwiseMin(other.min_);
   max_ = max_.cwiseMax(other.max_);
   return *this;
@@ -177,105 +153,85 @@ AABB<S>& AABB<S>::operator +=(const AABB<S>& other)
 
 //==============================================================================
 template <typename S>
-AABB<S> AABB<S>::operator +(const AABB<S>& other) const
-{
+AABB<S> AABB<S>::operator+(const AABB<S>& other) const {
   AABB res(*this);
   return res += other;
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::width() const
-{
+S AABB<S>::width() const {
   return max_[0] - min_[0];
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::height() const
-{
+S AABB<S>::height() const {
   return max_[1] - min_[1];
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::depth() const
-{
+S AABB<S>::depth() const {
   return max_[2] - min_[2];
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::volume() const
-{
+S AABB<S>::volume() const {
   return width() * height() * depth();
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::size() const
-{
+S AABB<S>::size() const {
   return (max_ - min_).squaredNorm();
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::radius() const
-{
+S AABB<S>::radius() const {
   return (max_ - min_).norm() / 2;
 }
 
 //==============================================================================
 template <typename S>
-Vector3<S> AABB<S>::center() const
-{
+Vector3<S> AABB<S>::center() const {
   return (min_ + max_) * 0.5;
 }
 
 //==============================================================================
 template <typename S>
-S AABB<S>::distance(const AABB<S>& other, Vector3<S>* P, Vector3<S>* Q) const
-{
+S AABB<S>::distance(const AABB<S>& other, Vector3<S>* P, Vector3<S>* Q) const {
   S result = 0;
-  for(std::size_t i = 0; i < 3; ++i)
-  {
+  std::cout << "S AABB<S>::distance\n";
+  for (std::size_t i = 0; i < 3; ++i) {
     const S& amin = min_[i];
     const S& amax = max_[i];
     const S& bmin = other.min_[i];
     const S& bmax = other.max_[i];
 
-    if(amin > bmax)
-    {
+    if (amin > bmax) {
       S delta = bmax - amin;
       result += delta * delta;
-      if(P && Q)
-      {
+      if (P && Q) {
         (*P)[i] = amin;
         (*Q)[i] = bmax;
       }
-    }
-    else if(bmin > amax)
-    {
+    } else if (bmin > amax) {
       S delta = amax - bmin;
       result += delta * delta;
-      if(P && Q)
-      {
+      if (P && Q) {
         (*P)[i] = amax;
         (*Q)[i] = bmin;
       }
-    }
-    else
-    {
-      if(P && Q)
-      {
-        if(bmin >= amin)
-        {
+    } else {
+      if (P && Q) {
+        if (bmin >= amin) {
           S t = 0.5 * (amax + bmin);
           (*P)[i] = t;
           (*Q)[i] = t;
-        }
-        else
-        {
+        } else {
           S t = 0.5 * (amin + bmax);
           (*P)[i] = t;
           (*Q)[i] = t;
@@ -289,23 +245,18 @@ S AABB<S>::distance(const AABB<S>& other, Vector3<S>* P, Vector3<S>* Q) const
 
 //==============================================================================
 template <typename S>
-S AABB<S>::distance(const AABB<S>& other) const
-{
+S AABB<S>::distance(const AABB<S>& other) const {
   S result = 0;
-  for(std::size_t i = 0; i < 3; ++i)
-  {
+  for (std::size_t i = 0; i < 3; ++i) {
     const S& amin = min_[i];
     const S& amax = max_[i];
     const S& bmin = other.min_[i];
     const S& bmax = other.max_[i];
 
-    if(amin > bmax)
-    {
+    if (amin > bmax) {
       S delta = bmax - amin;
       result += delta * delta;
-    }
-    else if(bmin > amax)
-    {
+    } else if (bmin > amax) {
       S delta = amax - bmin;
       result += delta * delta;
     }
@@ -316,16 +267,14 @@ S AABB<S>::distance(const AABB<S>& other) const
 
 //==============================================================================
 template <typename S>
-bool AABB<S>::equal(const AABB<S>& other) const
-{
-  return min_.isApprox(other.min_, std::numeric_limits<S>::epsilon() * 100)
-      && max_.isApprox(other.max_, std::numeric_limits<S>::epsilon() * 100);
+bool AABB<S>::equal(const AABB<S>& other) const {
+  return min_.isApprox(other.min_, std::numeric_limits<S>::epsilon() * 100) &&
+         max_.isApprox(other.max_, std::numeric_limits<S>::epsilon() * 100);
 }
 
 //==============================================================================
 template <typename S>
-AABB<S>& AABB<S>::expand(const Vector3<S>& delta)
-{
+AABB<S>& AABB<S>::expand(const Vector3<S>& delta) {
   min_ -= delta;
   max_ += delta;
   return *this;
@@ -333,8 +282,7 @@ AABB<S>& AABB<S>::expand(const Vector3<S>& delta)
 
 //==============================================================================
 template <typename S>
-AABB<S>& AABB<S>::expand(const AABB<S>& core, S ratio)
-{
+AABB<S>& AABB<S>::expand(const AABB<S>& core, S ratio) {
   min_ = min_ * ratio - core.min_;
   max_ = max_ * ratio - core.max_;
   return *this;
@@ -342,15 +290,13 @@ AABB<S>& AABB<S>::expand(const AABB<S>& core, S ratio)
 
 //==============================================================================
 template <typename S, typename Derived>
-AABB<S> translate(
-    const AABB<S>& aabb, const Eigen::MatrixBase<Derived>& t)
-{
+AABB<S> translate(const AABB<S>& aabb, const Eigen::MatrixBase<Derived>& t) {
   AABB<S> res(aabb);
   res.min_ += t;
   res.max_ += t;
   return res;
 }
 
-} // namespace fcl
+}  // namespace fcl
 
 #endif

@@ -40,77 +40,49 @@
 
 #include "fcl/math/bv/RSS.h"
 
-namespace fcl
-{
+namespace fcl {
 
 //==============================================================================
-extern template
-class FCL_EXPORT RSS<double>;
+extern template class FCL_EXPORT RSS<double>;
 
 //==============================================================================
-extern template
-void clipToRange(double& val, double a, double b);
+extern template void clipToRange(double& val, double a, double b);
 
 //==============================================================================
-extern template
-void segCoords(
-        double& t,
-        double& u,
-        double a,
-        double b,
-        double A_dot_B,
-        double A_dot_T,
-        double B_dot_T);
+extern template void segCoords(double& t, double& u, double a, double b,
+                               double A_dot_B, double A_dot_T, double B_dot_T);
 
 //==============================================================================
-extern template
-bool inVoronoi(
-        double a,
-        double b,
-        double Anorm_dot_B,
-        double Anorm_dot_T,
-        double A_dot_B,
-        double A_dot_T,
-        double B_dot_T);
+extern template bool inVoronoi(double a, double b, double Anorm_dot_B,
+                               double Anorm_dot_T, double A_dot_B,
+                               double A_dot_T, double B_dot_T);
 
 //==============================================================================
-extern template
-double rectDistance(
-    const Matrix3<double>& Rab,
-    const Vector3<double>& Tab,
-    const double a[2],
-    const double b[2],
-    Vector3<double>* P,
-    Vector3<double>* Q);
+extern template double rectDistance(const Matrix3<double>& Rab,
+                                    const Vector3<double>& Tab,
+                                    const double a[2], const double b[2],
+                                    Vector3<double>* P, Vector3<double>* Q);
 
 //==============================================================================
-extern template
-double rectDistance(
-    const Transform3<double>& tfab,
-    const double a[2],
-    const double b[2],
-    Vector3<double>* P,
-    Vector3<double>* Q);
+extern template double rectDistance(const Transform3<double>& tfab,
+                                    const double a[2], const double b[2],
+                                    Vector3<double>* P, Vector3<double>* Q);
 
 //==============================================================================
-extern template
-RSS<double> translate(const RSS<double>& bv, const Vector3<double>& t);
+extern template RSS<double> translate(const RSS<double>& bv,
+                                      const Vector3<double>& t);
 
 //==============================================================================
 template <typename S>
-RSS<S>::RSS()
-  : axis(Matrix3<S>::Identity()), To(Vector3<S>::Zero())
-{
+RSS<S>::RSS() : axis(Matrix3<S>::Identity()), To(Vector3<S>::Zero()) {
   // Do nothing
 }
 
 //==============================================================================
 template <typename S>
-bool RSS<S>::overlap(const RSS<S>& other) const
-{
+bool RSS<S>::overlap(const RSS<S>& other) const {
   Vector3<S> t = other.To - To;
-  Vector3<S> T(
-        axis.col(0).dot(t), axis.col(1).dot(t), axis.col(2).dot(t));
+  Vector3<S> T(axis.col(0).dot(t), axis.col(1).dot(t), axis.col(2).dot(t));
   Matrix3<S> R = axis.transpose() * other.axis;
 
   S dist = rectDistance(R, T, l, other.l);
@@ -119,42 +91,32 @@ bool RSS<S>::overlap(const RSS<S>& other) const
 
 //==============================================================================
 template <typename S>
-bool RSS<S>::overlap(const RSS<S>& other,
-                          RSS<S>& /*overlap_part*/) const
-{
+bool RSS<S>::overlap(const RSS<S>& other, RSS<S>& /*overlap_part*/) const {
   return overlap(other);
 }
 
 //==============================================================================
 template <typename S>
-bool RSS<S>::contain(const Vector3<S>& p) const
-{
+bool RSS<S>::contain(const Vector3<S>& p) const {
   Vector3<S> local_p = p - To;
-  Vector3<S> proj(
-      axis.col(0).dot(local_p),
-      axis.col(1).dot(local_p),
-      axis.col(2).dot(local_p));
+  Vector3<S> proj(axis.col(0).dot(local_p), axis.col(1).dot(local_p),
+                  axis.col(2).dot(local_p));
   S abs_proj2 = fabs(proj[2]);
 
   /// projection is within the rectangle
-  if((proj[0] < l[0]) && (proj[0] > 0) && (proj[1] < l[1]) && (proj[1] > 0))
-  {
+  if ((proj[0] < l[0]) && (proj[0] > 0) && (proj[1] < l[1]) && (proj[1] > 0)) {
     return (abs_proj2 < r);
-  }
-  else if((proj[0] < l[0]) && (proj[0] > 0) && ((proj[1] < 0) || (proj[1] > l[1])))
-  {
+  } else if ((proj[0] < l[0]) && (proj[0] > 0) &&
+             ((proj[1] < 0) || (proj[1] > l[1]))) {
     S y = (proj[1] > 0) ? l[1] : 0;
     Vector3<S> v(proj[0], y, 0);
     return ((proj - v).squaredNorm() < r * r);
-  }
-  else if((proj[1] < l[1]) && (proj[1] > 0) && ((proj[0] < 0) || (proj[0] > l[0])))
-  {
+  } else if ((proj[1] < l[1]) && (proj[1] > 0) &&
+             ((proj[0] < 0) || (proj[0] > l[0]))) {
     S x = (proj[0] > 0) ? l[0] : 0;
     Vector3<S> v(x, proj[1], 0);
     return ((proj - v).squaredNorm() < r * r);
-  }
-  else
-  {
+  } else {
     S x = (proj[0] > 0) ? l[0] : 0;
     S y = (proj[1] > 0) ? l[1] : 0;
     Vector3<S> v(x, y, 0);
@@ -164,132 +126,106 @@ bool RSS<S>::contain(const Vector3<S>& p) const
 
 //==============================================================================
 template <typename S>
-RSS<S>& RSS<S>::operator +=(const Vector3<S>& p)
+RSS<S>& RSS<S>::operator+=(const Vector3<S>& p)
 
 {
   Vector3<S> local_p = p - To;
-  Vector3<S> proj(
-      axis.col(0).dot(local_p),
-      axis.col(1).dot(local_p),
-      axis.col(2).dot(local_p));
+  Vector3<S> proj(axis.col(0).dot(local_p), axis.col(1).dot(local_p),
+                  axis.col(2).dot(local_p));
   S abs_proj2 = fabs(proj[2]);
 
   // projection is within the rectangle
-  if((proj[0] < l[0]) && (proj[0] > 0) && (proj[1] < l[1]) && (proj[1] > 0))
-  {
-    if(abs_proj2 < r)
-      ; // do nothing
-    else
-    {
-      r = 0.5 * (r + abs_proj2); // enlarge the r
+  if ((proj[0] < l[0]) && (proj[0] > 0) && (proj[1] < l[1]) && (proj[1] > 0)) {
+    if (abs_proj2 < r)
+      ;  // do nothing
+    else {
+      r = 0.5 * (r + abs_proj2);  // enlarge the r
       // change RSS origin position
-      if(proj[2] > 0)
+      if (proj[2] > 0)
         To[2] += 0.5 * (abs_proj2 - r);
       else
         To[2] -= 0.5 * (abs_proj2 - r);
     }
-  }
-  else if((proj[0] < l[0]) && (proj[0] > 0) && ((proj[1] < 0) || (proj[1] > l[1])))
-  {
+  } else if ((proj[0] < l[0]) && (proj[0] > 0) &&
+             ((proj[1] < 0) || (proj[1] > l[1]))) {
     S y = (proj[1] > 0) ? l[1] : 0;
     Vector3<S> v(proj[0], y, 0);
     S new_r_sqr = (proj - v).squaredNorm();
-    if(new_r_sqr < r * r)
-      ; // do nothing
-    else
-    {
-      if(abs_proj2 < r)
-      {
-        S delta_y = - std::sqrt(r * r - proj[2] * proj[2]) + fabs(proj[1] - y);
+    if (new_r_sqr < r * r)
+      ;  // do nothing
+    else {
+      if (abs_proj2 < r) {
+        S delta_y = -std::sqrt(r * r - proj[2] * proj[2]) + fabs(proj[1] - y);
         l[1] += delta_y;
-        if(proj[1] < 0)
-          To[1] -= delta_y;
-      }
-      else
-      {
+        if (proj[1] < 0) To[1] -= delta_y;
+      } else {
         S delta_y = fabs(proj[1] - y);
         l[1] += delta_y;
-        if(proj[1] < 0)
-          To[1] -= delta_y;
+        if (proj[1] < 0) To[1] -= delta_y;
 
-        if(proj[2] > 0)
+        if (proj[2] > 0)
           To[2] += 0.5 * (abs_proj2 - r);
         else
           To[2] -= 0.5 * (abs_proj2 - r);
       }
     }
-  }
-  else if((proj[1] < l[1]) && (proj[1] > 0) && ((proj[0] < 0) || (proj[0] > l[0])))
-  {
+  } else if ((proj[1] < l[1]) && (proj[1] > 0) &&
+             ((proj[0] < 0) || (proj[0] > l[0]))) {
     S x = (proj[0] > 0) ? l[0] : 0;
     Vector3<S> v(x, proj[1], 0);
     S new_r_sqr = (proj - v).squaredNorm();
-    if(new_r_sqr < r * r)
-      ; // do nothing
-    else
-    {
-      if(abs_proj2 < r)
-      {
-        S delta_x = - std::sqrt(r * r - proj[2] * proj[2]) + fabs(proj[0] - x);
+    if (new_r_sqr < r * r)
+      ;  // do nothing
+    else {
+      if (abs_proj2 < r) {
+        S delta_x = -std::sqrt(r * r - proj[2] * proj[2]) + fabs(proj[0] - x);
         l[0] += delta_x;
-        if(proj[0] < 0)
-          To[0] -= delta_x;
-      }
-      else
-      {
+        if (proj[0] < 0) To[0] -= delta_x;
+      } else {
         S delta_x = fabs(proj[0] - x);
         l[0] += delta_x;
-        if(proj[0] < 0)
-          To[0] -= delta_x;
+        if (proj[0] < 0) To[0] -= delta_x;
 
-        if(proj[2] > 0)
+        if (proj[2] > 0)
           To[2] += 0.5 * (abs_proj2 - r);
         else
           To[2] -= 0.5 * (abs_proj2 - r);
       }
     }
-  }
-  else
-  {
+  } else {
     S x = (proj[0] > 0) ? l[0] : 0;
     S y = (proj[1] > 0) ? l[1] : 0;
     Vector3<S> v(x, y, 0);
     S new_r_sqr = (proj - v).squaredNorm();
-    if(new_r_sqr < r * r)
-      ; // do nothing
-    else
-    {
-      if(abs_proj2 < r)
-      {
+    if (new_r_sqr < r * r)
+      ;  // do nothing
+    else {
+      if (abs_proj2 < r) {
         S diag = std::sqrt(new_r_sqr - proj[2] * proj[2]);
-        S delta_diag = - std::sqrt(r * r - proj[2] * proj[2]) + diag;
+        S delta_diag = -std::sqrt(r * r - proj[2] * proj[2]) + diag;
 
         S delta_x = delta_diag / diag * fabs(proj[0] - x);
         S delta_y = delta_diag / diag * fabs(proj[1] - y);
         l[0] += delta_x;
         l[1] += delta_y;
 
-        if(proj[0] < 0 && proj[1] < 0)
-        {
+        if (proj[0] < 0 && proj[1] < 0) {
           To[0] -= delta_x;
           To[1] -= delta_y;
         }
-      }
-      else
-      {
+      } else {
         S delta_x = fabs(proj[0] - x);
         S delta_y = fabs(proj[1] - y);
 
         l[0] += delta_x;
         l[1] += delta_y;
 
-        if(proj[0] < 0 && proj[1] < 0)
-        {
+        if (proj[0] < 0 && proj[1] < 0) {
           To[0] -= delta_x;
           To[1] -= delta_y;
         }
 
-        if(proj[2] > 0)
+        if (proj[2] > 0)
           To[2] += 0.5 * (abs_proj2 - r);
         else
           To[2] -= 0.5 * (abs_proj2 - r);
@@ -302,16 +238,14 @@ RSS<S>& RSS<S>::operator +=(const Vector3<S>& p)
 
 //==============================================================================
 template <typename S>
-RSS<S>& RSS<S>::operator +=(const RSS<S>& other)
-{
+RSS<S>& RSS<S>::operator+=(const RSS<S>& other) {
   *this = *this + other;
   return *this;
 }
 
 //==============================================================================
 template <typename S>
-RSS<S> RSS<S>::operator +(const RSS<S>& other) const
-{
+RSS<S> RSS<S>::operator+(const RSS<S>& other) const {
   RSS<S> bv;
 
   Vector3<S> v[16];
@@ -350,20 +284,30 @@ RSS<S> RSS<S>::operator +(const RSS<S>& other) const
   v[14] = To + d0_neg + d1_neg + d2_pos;
   v[15] = To + d0_neg + d1_neg + d2_neg;
 
-
-  Matrix3<S> M; // row first matrix
-  Matrix3<S> E; // row first eigen-vectors
+  Matrix3<S> M;  // row first matrix
+  Matrix3<S> E;  // row first eigen-vectors
   Vector3<S> s(0, 0, 0);
 
   getCovariance<S>(v, nullptr, nullptr, nullptr, 16, M);
   eigen_old(M, s, E);
 
   int min, mid, max;
-  if(s[0] > s[1]) { max = 0; min = 1; }
-  else { min = 0; max = 1; }
-  if(s[2] < s[min]) { mid = min; min = 2; }
-  else if(s[2] > s[max]) { mid = max; max = 2; }
-  else { mid = 2; }
+  if (s[0] > s[1]) {
+    max = 0;
+    min = 1;
+  } else {
+    min = 0;
+    max = 1;
+  }
+  if (s[2] < s[min]) {
+    mid = min;
+    min = 2;
+  } else if (s[2] > s[max]) {
+    mid = max;
+    max = 2;
+  } else {
+    mid = 2;
+  }
 
   // column first matrix, as the axis in RSS
   bv.axis.col(0) = E.col(max);
@@ -371,58 +315,52 @@ RSS<S> RSS<S>::operator +(const RSS<S>& other) const
   bv.axis.col(2).noalias() = axis.col(0).cross(axis.col(1));
 
   // set rss origin, rectangle size and radius
-  getRadiusAndOriginAndRectangleSize<S>(v, nullptr, nullptr, nullptr, 16, bv.axis, bv.To, bv.l, bv.r);
+  getRadiusAndOriginAndRectangleSize<S>(v, nullptr, nullptr, nullptr, 16,
+                                        bv.axis, bv.To, bv.l, bv.r);
 
   return bv;
 }
 
 //==============================================================================
 template <typename S>
-S RSS<S>::width() const
-{
+S RSS<S>::width() const {
   return l[0] + 2 * r;
 }
 
 //==============================================================================
 template <typename S>
-S RSS<S>::height() const
-{
+S RSS<S>::height() const {
   return l[1] + 2 * r;
 }
 
 //==============================================================================
 template <typename S>
-S RSS<S>::depth() const
-{
+S RSS<S>::depth() const {
   return 2 * r;
 }
 
 //==============================================================================
 template <typename S>
-S RSS<S>::volume() const
-{
+S RSS<S>::volume() const {
   return (l[0] * l[1] * 2 * r + 4 * constants<S>::pi() * r * r * r);
 }
 
 //==============================================================================
 template <typename S>
-S RSS<S>::size() const
-{
+S RSS<S>::size() const {
   return (std::sqrt(l[0] * l[0] + l[1] * l[1]) + 2 * r);
 }
 
 //==============================================================================
 template <typename S>
-const Vector3<S> RSS<S>::center() const
-{
+const Vector3<S> RSS<S>::center() const {
   Vector3<S> p_ToCenter_T;
   p_ToCenter_T << l[0] * 0.5, l[1] * 0.5, 0.0;
   return p_FoTo_F() + R_FT() * p_ToCenter_T;
 }
 
 template <typename S>
-void RSS<S>::setToFromCenter(const Vector3<S>& p_FoCenter_F)
-{
+void RSS<S>::setToFromCenter(const Vector3<S>& p_FoCenter_F) {
   Vector3<S> p_ToCenter_T;
   p_ToCenter_T << l[0] * 0.5, l[1] * 0.5, 0.0;
   p_FoTo_F() = p_FoCenter_F - R_FT() * p_ToCenter_T;
@@ -430,14 +368,10 @@ void RSS<S>::setToFromCenter(const Vector3<S>& p_FoCenter_F)
 
 //==============================================================================
 template <typename S>
-S RSS<S>::distance(
-    const RSS<S>& other,
-    Vector3<S>* P,
-    Vector3<S>* Q) const
-{
+S RSS<S>::distance(const RSS<S>& other, Vector3<S>* P, Vector3<S>* Q) const {
+  // std::cout << "S RSS<S>::distance\n";
   Vector3<S> t = other.To - To;
-  Vector3<S> T(
-        axis.col(0).dot(t), axis.col(1).dot(t), axis.col(2).dot(t));
+  Vector3<S> T(axis.col(0).dot(t), axis.col(1).dot(t), axis.col(2).dot(t));
   Matrix3<S> R = axis.transpose() * other.axis;
 
   S dist = rectDistance(R, T, l, other.l, P, Q);
@@ -447,34 +381,31 @@ S RSS<S>::distance(
 
 //==============================================================================
 template <typename S>
-void clipToRange(S& val, S a, S b)
-{
-  if(val < a) val = a;
-  else if(val > b) val = b;
+void clipToRange(S& val, S a, S b) {
+  if (val < a)
+    val = a;
+  else if (val > b)
+    val = b;
 }
 
 //==============================================================================
 template <typename S>
-void segCoords(S& t, S& u, S a, S b, S A_dot_B, S A_dot_T, S B_dot_T)
-{
+void segCoords(S& t, S& u, S a, S b, S A_dot_B, S A_dot_T, S B_dot_T) {
   S denom = 1 - A_dot_B * A_dot_B;
 
-  if(denom == 0) t = 0;
-  else
-  {
+  if (denom == 0)
+    t = 0;
+  else {
     t = (A_dot_T - B_dot_T * A_dot_B) / denom;
     clipToRange(t, (S)0.0, a);
   }
 
   u = t * A_dot_B - B_dot_T;
-  if(u < 0)
-  {
+  if (u < 0) {
     u = 0;
     t = A_dot_T;
     clipToRange(t, (S)0.0, a);
-  }
-  else if(u > b)
-  {
+  } else if (u > b) {
     u = b;
     t = u * A_dot_B + A_dot_T;
     clipToRange(t, (S)0.0, a);
@@ -483,9 +414,9 @@ void segCoords(S& t, S& u, S a, S b, S A_dot_B, S A_dot_T, S B_dot_T)
 
 //==============================================================================
 template <typename S>
-bool inVoronoi(S a, S b, S Anorm_dot_B, S Anorm_dot_T, S A_dot_B, S A_dot_T, S B_dot_T)
-{
-  if(fabs(Anorm_dot_B) < 1e-7) return false;
+bool inVoronoi(S a, S b, S Anorm_dot_B, S Anorm_dot_T, S A_dot_B, S A_dot_T,
+               S B_dot_T) {
+  if (fabs(Anorm_dot_B) < 1e-7) return false;
 
   S t, u, v;
 
@@ -497,21 +428,18 @@ bool inVoronoi(S a, S b, S Anorm_dot_B, S Anorm_dot_T, S A_dot_B, S A_dot_T, S B
 
   v = t * A_dot_B - B_dot_T;
 
-  if(Anorm_dot_B > 0)
-  {
-    if(v > (u + 1e-7)) return true;
-  }
-  else
-  {
-    if(v < (u - 1e-7)) return true;
+  if (Anorm_dot_B > 0) {
+    if (v > (u + 1e-7)) return true;
+  } else {
+    if (v < (u - 1e-7)) return true;
   }
   return false;
 }
 
 //==============================================================================
 template <typename S>
-S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const S b[2], Vector3<S>* P, Vector3<S>* Q)
-{
+S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2],
+               const S b[2], Vector3<S>* P, Vector3<S>* Q) {
   S A0_dot_B0, A0_dot_B1, A1_dot_B0, A1_dot_B1;
 
   A0_dot_B0 = Rab(0, 0);
@@ -547,15 +475,12 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
   AUL_x = ALL_x + aA0_dot_B0;
   AUU_x = ALU_x + aA0_dot_B0;
 
-  if(ALL_x < ALU_x)
-  {
+  if (ALL_x < ALU_x) {
     LA1_lx = ALL_x;
     LA1_ux = ALU_x;
     UA1_lx = AUL_x;
     UA1_ux = AUU_x;
-  }
-  else
-  {
+  } else {
     LA1_lx = ALU_x;
     LA1_ux = ALL_x;
     UA1_lx = AUU_x;
@@ -567,15 +492,12 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
   BUL_x = BLL_x + bA0_dot_B0;
   BUU_x = BLU_x + bA0_dot_B0;
 
-  if(BLL_x < BLU_x)
-  {
+  if (BLL_x < BLU_x) {
     LB1_lx = BLL_x;
     LB1_ux = BLU_x;
     UB1_lx = BUL_x;
     UB1_ux = BUU_x;
-  }
-  else
-  {
+  } else {
     LB1_lx = BLU_x;
     LB1_ux = BLL_x;
     UB1_lx = BUU_x;
@@ -584,26 +506,21 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA1, UB1
 
-  if((UA1_ux > b[0]) && (UB1_ux > a[0]))
-  {
-    if(((UA1_lx > b[0]) ||
-        inVoronoi(b[1], a[1], A1_dot_B0, aA0_dot_B0 - b[0] - Tba[0],
-                  A1_dot_B1, aA0_dot_B1 - Tba[1],
-                  -Tab[1] - bA1_dot_B0))
-       &&
-       ((UB1_lx > a[0]) ||
-        inVoronoi(a[1], b[1], A0_dot_B1, Tab[0] + bA0_dot_B0 - a[0],
-                  A1_dot_B1, Tab[1] + bA1_dot_B0, Tba[1] - aA0_dot_B1)))
-    {
+  if ((UA1_ux > b[0]) && (UB1_ux > a[0])) {
+    if (((UA1_lx > b[0]) ||
+         inVoronoi(b[1], a[1], A1_dot_B0, aA0_dot_B0 - b[0] - Tba[0], A1_dot_B1,
+                   aA0_dot_B1 - Tba[1], -Tab[1] - bA1_dot_B0)) &&
+        ((UB1_lx > a[0]) ||
+         inVoronoi(a[1], b[1], A0_dot_B1, Tab[0] + bA0_dot_B0 - a[0], A1_dot_B1,
+                   Tab[1] + bA1_dot_B0, Tba[1] - aA0_dot_B1))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, Tab[1] + bA1_dot_B0,
                 Tba[1] - aA0_dot_B1);
 
-      D[0] = Tab[0] + Rab(0, 0) * b[0] + Rab(0, 1) * u - a[0] ;
+      D[0] = Tab[0] + Rab(0, 0) * b[0] + Rab(0, 1) * u - a[0];
       D[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - t;
       D[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -612,27 +529,21 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
     }
   }
 
-
   // UA1, LB1
 
-  if((UA1_lx < 0) && (LB1_ux > a[0]))
-  {
-    if(((UA1_ux < 0) ||
-        inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0] - aA0_dot_B0,
-                  A1_dot_B1, aA0_dot_B1 - Tba[1], -Tab[1]))
-       &&
-       ((LB1_lx > a[0]) ||
-        inVoronoi(a[1], b[1], A0_dot_B1, Tab[0] - a[0],
-                  A1_dot_B1, Tab[1], Tba[1] - aA0_dot_B1)))
-    {
+  if ((UA1_lx < 0) && (LB1_ux > a[0])) {
+    if (((UA1_ux < 0) || inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0] - aA0_dot_B0,
+                                   A1_dot_B1, aA0_dot_B1 - Tba[1], -Tab[1])) &&
+        ((LB1_lx > a[0]) ||
+         inVoronoi(a[1], b[1], A0_dot_B1, Tab[0] - a[0], A1_dot_B1, Tab[1],
+                   Tba[1] - aA0_dot_B1))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, Tab[1], Tba[1] - aA0_dot_B1);
 
       D[0] = Tab[0] + Rab(0, 1) * u - a[0];
       D[1] = Tab[1] + Rab(1, 1) * u - t;
       D[2] = Tab[2] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -643,24 +554,19 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA1, UB1
 
-  if((LA1_ux > b[0]) && (UB1_lx < 0))
-  {
-    if(((LA1_lx > b[0]) ||
-        inVoronoi(b[1], a[1], A1_dot_B0, -Tba[0] - b[0],
-                  A1_dot_B1, -Tba[1], -Tab[1] - bA1_dot_B0))
-       &&
-       ((UB1_ux < 0) ||
-        inVoronoi(a[1], b[1], -A0_dot_B1, -Tab[0] - bA0_dot_B0,
-                  A1_dot_B1, Tab[1] + bA1_dot_B0, Tba[1])))
-    {
+  if ((LA1_ux > b[0]) && (UB1_lx < 0)) {
+    if (((LA1_lx > b[0]) ||
+         inVoronoi(b[1], a[1], A1_dot_B0, -Tba[0] - b[0], A1_dot_B1, -Tba[1],
+                   -Tab[1] - bA1_dot_B0)) &&
+        ((UB1_ux < 0) || inVoronoi(a[1], b[1], -A0_dot_B1, -Tab[0] - bA0_dot_B0,
+                                   A1_dot_B1, Tab[1] + bA1_dot_B0, Tba[1]))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, Tab[1] + bA1_dot_B0, Tba[1]);
 
       D[0] = Tab[0] + Rab(0, 0) * b[0] + Rab(0, 1) * u;
       D[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - t;
       D[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -671,24 +577,18 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA1, LB1
 
-  if((LA1_lx < 0) && (LB1_lx < 0))
-  {
-    if (((LA1_ux < 0) ||
-         inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0], A1_dot_B1,
-                   -Tba[1], -Tab[1]))
-        &&
-        ((LB1_ux < 0) ||
-         inVoronoi(a[1], b[1], -A0_dot_B1, -Tab[0], A1_dot_B1,
-                   Tab[1], Tba[1])))
-    {
+  if ((LA1_lx < 0) && (LB1_lx < 0)) {
+    if (((LA1_ux < 0) || inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0], A1_dot_B1,
+                                   -Tba[1], -Tab[1])) &&
+        ((LB1_ux < 0) || inVoronoi(a[1], b[1], -A0_dot_B1, -Tab[0], A1_dot_B1,
+                                   Tab[1], Tba[1]))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, Tab[1], Tba[1]);
 
       D[0] = Tab[0] + Rab(0, 1) * u;
       D[1] = Tab[1] + Rab(1, 1) * u - t;
       D[2] = Tab[2] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -706,30 +606,24 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   S LA1_ly, LA1_uy, UA1_ly, UA1_uy, LB0_lx, LB0_ux, UB0_lx, UB0_ux;
 
-  if(ALL_y < ALU_y)
-  {
+  if (ALL_y < ALU_y) {
     LA1_ly = ALL_y;
     LA1_uy = ALU_y;
     UA1_ly = AUL_y;
     UA1_uy = AUU_y;
-  }
-  else
-  {
+  } else {
     LA1_ly = ALU_y;
     LA1_uy = ALL_y;
     UA1_ly = AUU_y;
     UA1_uy = AUL_y;
   }
 
-  if(BLL_x < BUL_x)
-  {
+  if (BLL_x < BUL_x) {
     LB0_lx = BLL_x;
     LB0_ux = BUL_x;
     UB0_lx = BLU_x;
     UB0_ux = BUU_x;
-  }
-  else
-  {
+  } else {
     LB0_lx = BUL_x;
     LB0_ux = BLL_x;
     UB0_lx = BUU_x;
@@ -738,25 +632,21 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA1, UB0
 
-  if((UA1_uy > b[1]) && (UB0_ux > a[0]))
-  {
-    if(((UA1_ly > b[1]) ||
-        inVoronoi(b[0], a[1], A1_dot_B1, aA0_dot_B1 - Tba[1] - b[1],
-                  A1_dot_B0, aA0_dot_B0 - Tba[0], -Tab[1] - bA1_dot_B1))
-       &&
-       ((UB0_lx > a[0]) ||
-        inVoronoi(a[1], b[0], A0_dot_B0, Tab[0] - a[0] + bA0_dot_B1,
-                  A1_dot_B0, Tab[1] + bA1_dot_B1, Tba[0] - aA0_dot_B0)))
-    {
+  if ((UA1_uy > b[1]) && (UB0_ux > a[0])) {
+    if (((UA1_ly > b[1]) ||
+         inVoronoi(b[0], a[1], A1_dot_B1, aA0_dot_B1 - Tba[1] - b[1], A1_dot_B0,
+                   aA0_dot_B0 - Tba[0], -Tab[1] - bA1_dot_B1)) &&
+        ((UB0_lx > a[0]) ||
+         inVoronoi(a[1], b[0], A0_dot_B0, Tab[0] - a[0] + bA0_dot_B1, A1_dot_B0,
+                   Tab[1] + bA1_dot_B1, Tba[0] - aA0_dot_B0))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, Tab[1] + bA1_dot_B1,
                 Tba[0] - aA0_dot_B0);
 
-      D[0] = Tab[0] + Rab(0, 1) * b[1] + Rab(0, 0) * u - a[0] ;
+      D[0] = Tab[0] + Rab(0, 1) * b[1] + Rab(0, 0) * u - a[0];
       D[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - t;
       D[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -767,24 +657,19 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA1, LB0
 
-  if((UA1_ly < 0) && (LB0_ux > a[0]))
-  {
-    if(((UA1_uy < 0) ||
-        inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1] - aA0_dot_B1, A1_dot_B0,
-                  aA0_dot_B0 - Tba[0], -Tab[1]))
-       &&
-       ((LB0_lx > a[0]) ||
-        inVoronoi(a[1], b[0], A0_dot_B0, Tab[0] - a[0],
-                  A1_dot_B0, Tab[1], Tba[0] - aA0_dot_B0)))
-    {
+  if ((UA1_ly < 0) && (LB0_ux > a[0])) {
+    if (((UA1_uy < 0) || inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1] - aA0_dot_B1,
+                                   A1_dot_B0, aA0_dot_B0 - Tba[0], -Tab[1])) &&
+        ((LB0_lx > a[0]) ||
+         inVoronoi(a[1], b[0], A0_dot_B0, Tab[0] - a[0], A1_dot_B0, Tab[1],
+                   Tba[0] - aA0_dot_B0))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, Tab[1], Tba[0] - aA0_dot_B0);
 
       D[0] = Tab[0] + Rab(0, 0) * u - a[0];
       D[1] = Tab[1] + Rab(1, 0) * u - t;
       D[2] = Tab[2] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -795,29 +680,23 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA1, UB0
 
-  if((LA1_uy > b[1]) && (UB0_lx < 0))
-  {
-    if(((LA1_ly > b[1]) ||
-        inVoronoi(b[0], a[1], A1_dot_B1, -Tba[1] - b[1],
-                  A1_dot_B0, -Tba[0], -Tab[1] - bA1_dot_B1))
-       &&
+  if ((LA1_uy > b[1]) && (UB0_lx < 0)) {
+    if (((LA1_ly > b[1]) ||
+         inVoronoi(b[0], a[1], A1_dot_B1, -Tba[1] - b[1], A1_dot_B0, -Tba[0],
+                   -Tab[1] - bA1_dot_B1)) &&
 
-       ((UB0_ux < 0) ||
-        inVoronoi(a[1], b[0], -A0_dot_B0, -Tab[0] - bA0_dot_B1, A1_dot_B0,
-                  Tab[1] + bA1_dot_B1, Tba[0])))
-    {
+        ((UB0_ux < 0) || inVoronoi(a[1], b[0], -A0_dot_B0, -Tab[0] - bA0_dot_B1,
+                                   A1_dot_B0, Tab[1] + bA1_dot_B1, Tba[0]))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, Tab[1] + bA1_dot_B1, Tba[0]);
 
       D[0] = Tab[0] + Rab(0, 1) * b[1] + Rab(0, 0) * u;
       D[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - t;
       D[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
-
 
       return D.norm();
     }
@@ -825,24 +704,18 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA1, LB0
 
-  if((LA1_ly < 0) && (LB0_lx < 0))
-  {
-    if(((LA1_uy < 0) ||
-        inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1], A1_dot_B0,
-                  -Tba[0], -Tab[1]))
-       &&
-       ((LB0_ux < 0) ||
-        inVoronoi(a[1], b[0], -A0_dot_B0, -Tab[0], A1_dot_B0,
-                  Tab[1], Tba[0])))
-    {
+  if ((LA1_ly < 0) && (LB0_lx < 0)) {
+    if (((LA1_uy < 0) || inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1], A1_dot_B0,
+                                   -Tba[0], -Tab[1])) &&
+        ((LB0_ux < 0) || inVoronoi(a[1], b[0], -A0_dot_B0, -Tab[0], A1_dot_B0,
+                                   Tab[1], Tba[0]))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, Tab[1], Tba[0]);
 
       D[0] = Tab[0] + Rab(0, 0) * u;
       D[1] = Tab[1] + Rab(1, 0) * u - t;
       D[2] = Tab[2] + Rab(2, 0) * u;
 
-      if(P&& Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -860,30 +733,24 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   S LA0_lx, LA0_ux, UA0_lx, UA0_ux, LB1_ly, LB1_uy, UB1_ly, UB1_uy;
 
-  if(ALL_x < AUL_x)
-  {
+  if (ALL_x < AUL_x) {
     LA0_lx = ALL_x;
     LA0_ux = AUL_x;
     UA0_lx = ALU_x;
     UA0_ux = AUU_x;
-  }
-  else
-  {
+  } else {
     LA0_lx = AUL_x;
     LA0_ux = ALL_x;
     UA0_lx = AUU_x;
     UA0_ux = ALU_x;
   }
 
-  if(BLL_y < BLU_y)
-  {
+  if (BLL_y < BLU_y) {
     LB1_ly = BLL_y;
     LB1_uy = BLU_y;
     UB1_ly = BUL_y;
     UB1_uy = BUU_y;
-  }
-  else
-  {
+  } else {
     LB1_ly = BLU_y;
     LB1_uy = BLL_y;
     UB1_ly = BUU_y;
@@ -892,16 +759,13 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA0, UB1
 
-  if((UA0_ux > b[0]) && (UB1_uy > a[1]))
-  {
-    if(((UA0_lx > b[0]) ||
-        inVoronoi(b[1], a[0], A0_dot_B0, aA1_dot_B0 - Tba[0] - b[0],
-                  A0_dot_B1, aA1_dot_B1 - Tba[1], -Tab[0] - bA0_dot_B0))
-       &&
-       ((UB1_ly > a[1]) ||
-        inVoronoi(a[0], b[1], A1_dot_B1, Tab[1] - a[1] + bA1_dot_B0,
-                  A0_dot_B1, Tab[0] + bA0_dot_B0, Tba[1] - aA1_dot_B1)))
-    {
+  if ((UA0_ux > b[0]) && (UB1_uy > a[1])) {
+    if (((UA0_lx > b[0]) ||
+         inVoronoi(b[1], a[0], A0_dot_B0, aA1_dot_B0 - Tba[0] - b[0], A0_dot_B1,
+                   aA1_dot_B1 - Tba[1], -Tab[0] - bA0_dot_B0)) &&
+        ((UB1_ly > a[1]) ||
+         inVoronoi(a[0], b[1], A1_dot_B1, Tab[1] - a[1] + bA1_dot_B0, A0_dot_B1,
+                   Tab[0] + bA0_dot_B0, Tba[1] - aA1_dot_B1))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, Tab[0] + bA0_dot_B0,
                 Tba[1] - aA1_dot_B1);
 
@@ -909,8 +773,7 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
       D[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u - a[1];
       D[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -921,24 +784,19 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA0, LB1
 
-  if((UA0_lx < 0) && (LB1_uy > a[1]))
-  {
-    if(((UA0_ux < 0) ||
-        inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0] - aA1_dot_B0, A0_dot_B1,
-                  aA1_dot_B1 - Tba[1], -Tab[0]))
-       &&
-       ((LB1_ly > a[1]) ||
-        inVoronoi(a[0], b[1], A1_dot_B1, Tab[1] - a[1], A0_dot_B1, Tab[0],
-                  Tba[1] - aA1_dot_B1)))
-    {
+  if ((UA0_lx < 0) && (LB1_uy > a[1])) {
+    if (((UA0_ux < 0) || inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0] - aA1_dot_B0,
+                                   A0_dot_B1, aA1_dot_B1 - Tba[1], -Tab[0])) &&
+        ((LB1_ly > a[1]) ||
+         inVoronoi(a[0], b[1], A1_dot_B1, Tab[1] - a[1], A0_dot_B1, Tab[0],
+                   Tba[1] - aA1_dot_B1))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, Tab[0], Tba[1] - aA1_dot_B1);
 
       D[0] = Tab[0] + Rab(0, 1) * u - t;
       D[1] = Tab[1] + Rab(1, 1) * u - a[1];
       D[2] = Tab[2] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -949,24 +807,19 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA0, UB1
 
-  if((LA0_ux > b[0]) && (UB1_ly < 0))
-  {
-    if(((LA0_lx > b[0]) ||
-        inVoronoi(b[1], a[0], A0_dot_B0, -b[0] - Tba[0], A0_dot_B1, -Tba[1],
-                  -bA0_dot_B0 - Tab[0]))
-       &&
-       ((UB1_uy < 0) ||
-        inVoronoi(a[0], b[1], -A1_dot_B1, -Tab[1] - bA1_dot_B0, A0_dot_B1,
-                  Tab[0] + bA0_dot_B0, Tba[1])))
-    {
+  if ((LA0_ux > b[0]) && (UB1_ly < 0)) {
+    if (((LA0_lx > b[0]) ||
+         inVoronoi(b[1], a[0], A0_dot_B0, -b[0] - Tba[0], A0_dot_B1, -Tba[1],
+                   -bA0_dot_B0 - Tab[0])) &&
+        ((UB1_uy < 0) || inVoronoi(a[0], b[1], -A1_dot_B1, -Tab[1] - bA1_dot_B0,
+                                   A0_dot_B1, Tab[0] + bA0_dot_B0, Tba[1]))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, Tab[0] + bA0_dot_B0, Tba[1]);
 
       D[0] = Tab[0] + Rab(0, 0) * b[0] + Rab(0, 1) * u - t;
       D[1] = Tab[1] + Rab(1, 0) * b[0] + Rab(1, 1) * u;
       D[2] = Tab[2] + Rab(2, 0) * b[0] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -977,24 +830,18 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA0, LB1
 
-  if((LA0_lx < 0) && (LB1_ly < 0))
-  {
-    if(((LA0_ux < 0) ||
-        inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0], A0_dot_B1, -Tba[1],
-                  -Tab[0]))
-       &&
-       ((LB1_uy < 0) ||
-        inVoronoi(a[0], b[1], -A1_dot_B1, -Tab[1], A0_dot_B1,
-                  Tab[0], Tba[1])))
-    {
+  if ((LA0_lx < 0) && (LB1_ly < 0)) {
+    if (((LA0_ux < 0) || inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0], A0_dot_B1,
+                                   -Tba[1], -Tab[0])) &&
+        ((LB1_uy < 0) || inVoronoi(a[0], b[1], -A1_dot_B1, -Tab[1], A0_dot_B1,
+                                   Tab[0], Tba[1]))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, Tab[0], Tba[1]);
 
       D[0] = Tab[0] + Rab(0, 1) * u - t;
       D[1] = Tab[1] + Rab(1, 1) * u;
       D[2] = Tab[2] + Rab(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1005,30 +852,24 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   S LA0_ly, LA0_uy, UA0_ly, UA0_uy, LB0_ly, LB0_uy, UB0_ly, UB0_uy;
 
-  if(ALL_y < AUL_y)
-  {
+  if (ALL_y < AUL_y) {
     LA0_ly = ALL_y;
     LA0_uy = AUL_y;
     UA0_ly = ALU_y;
     UA0_uy = AUU_y;
-  }
-  else
-  {
+  } else {
     LA0_ly = AUL_y;
     LA0_uy = ALL_y;
     UA0_ly = AUU_y;
     UA0_uy = ALU_y;
   }
 
-  if(BLL_y < BUL_y)
-  {
+  if (BLL_y < BUL_y) {
     LB0_ly = BLL_y;
     LB0_uy = BUL_y;
     UB0_ly = BLU_y;
     UB0_uy = BUU_y;
-  }
-  else
-  {
+  } else {
     LB0_ly = BUL_y;
     LB0_uy = BLL_y;
     UB0_ly = BUU_y;
@@ -1037,16 +878,13 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA0, UB0
 
-  if((UA0_uy > b[1]) && (UB0_uy > a[1]))
-  {
-    if(((UA0_ly > b[1]) ||
-        inVoronoi(b[0], a[0], A0_dot_B1, aA1_dot_B1 - Tba[1] - b[1],
-                  A0_dot_B0, aA1_dot_B0 - Tba[0], -Tab[0] - bA0_dot_B1))
-       &&
-       ((UB0_ly > a[1]) ||
-        inVoronoi(a[0], b[0], A1_dot_B0, Tab[1] - a[1] + bA1_dot_B1, A0_dot_B0,
-                  Tab[0] + bA0_dot_B1, Tba[0] - aA1_dot_B0)))
-    {
+  if ((UA0_uy > b[1]) && (UB0_uy > a[1])) {
+    if (((UA0_ly > b[1]) ||
+         inVoronoi(b[0], a[0], A0_dot_B1, aA1_dot_B1 - Tba[1] - b[1], A0_dot_B0,
+                   aA1_dot_B0 - Tba[0], -Tab[0] - bA0_dot_B1)) &&
+        ((UB0_ly > a[1]) ||
+         inVoronoi(a[0], b[0], A1_dot_B0, Tab[1] - a[1] + bA1_dot_B1, A0_dot_B0,
+                   Tab[0] + bA0_dot_B1, Tba[0] - aA1_dot_B0))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, Tab[0] + bA0_dot_B1,
                 Tba[0] - aA1_dot_B0);
 
@@ -1054,8 +892,7 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
       D[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u - a[1];
       D[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1066,24 +903,19 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // UA0, LB0
 
-  if((UA0_ly < 0) && (LB0_uy > a[1]))
-  {
-    if(((UA0_uy < 0) ||
-        inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1] - aA1_dot_B1, A0_dot_B0,
-                  aA1_dot_B0 - Tba[0], -Tab[0]))
-       &&
-       ((LB0_ly > a[1]) ||
-        inVoronoi(a[0], b[0], A1_dot_B0, Tab[1] - a[1],
-                  A0_dot_B0, Tab[0], Tba[0] - aA1_dot_B0)))
-    {
+  if ((UA0_ly < 0) && (LB0_uy > a[1])) {
+    if (((UA0_uy < 0) || inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1] - aA1_dot_B1,
+                                   A0_dot_B0, aA1_dot_B0 - Tba[0], -Tab[0])) &&
+        ((LB0_ly > a[1]) ||
+         inVoronoi(a[0], b[0], A1_dot_B0, Tab[1] - a[1], A0_dot_B0, Tab[0],
+                   Tba[0] - aA1_dot_B0))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, Tab[0], Tba[0] - aA1_dot_B0);
 
       D[0] = Tab[0] + Rab(0, 0) * u - t;
       D[1] = Tab[1] + Rab(1, 0) * u - a[1];
       D[2] = Tab[2] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1094,25 +926,20 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA0, UB0
 
-  if((LA0_uy > b[1]) && (UB0_ly < 0))
-  {
-    if(((LA0_ly > b[1]) ||
-        inVoronoi(b[0], a[0], A0_dot_B1, -Tba[1] - b[1], A0_dot_B0, -Tba[0],
-                  -Tab[0] - bA0_dot_B1))
-       &&
+  if ((LA0_uy > b[1]) && (UB0_ly < 0)) {
+    if (((LA0_ly > b[1]) ||
+         inVoronoi(b[0], a[0], A0_dot_B1, -Tba[1] - b[1], A0_dot_B0, -Tba[0],
+                   -Tab[0] - bA0_dot_B1)) &&
 
-       ((UB0_uy < 0) ||
-        inVoronoi(a[0], b[0], -A1_dot_B0, -Tab[1] - bA1_dot_B1, A0_dot_B0,
-                  Tab[0] + bA0_dot_B1, Tba[0])))
-    {
+        ((UB0_uy < 0) || inVoronoi(a[0], b[0], -A1_dot_B0, -Tab[1] - bA1_dot_B1,
+                                   A0_dot_B0, Tab[0] + bA0_dot_B1, Tba[0]))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, Tab[0] + bA0_dot_B1, Tba[0]);
 
       D[0] = Tab[0] + Rab(0, 1) * b[1] + Rab(0, 0) * u - t;
       D[1] = Tab[1] + Rab(1, 1) * b[1] + Rab(1, 0) * u;
       D[2] = Tab[2] + Rab(2, 1) * b[1] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1123,24 +950,18 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   // LA0, LB0
 
-  if((LA0_ly < 0) && (LB0_ly < 0))
-  {
-    if(((LA0_uy < 0) ||
-        inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1], A0_dot_B0,
-                  -Tba[0], -Tab[0]))
-       &&
-       ((LB0_uy < 0) ||
-        inVoronoi(a[0], b[0], -A1_dot_B0, -Tab[1], A0_dot_B0,
-                  Tab[0], Tba[0])))
-    {
+  if ((LA0_ly < 0) && (LB0_ly < 0)) {
+    if (((LA0_uy < 0) || inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1], A0_dot_B0,
+                                   -Tba[0], -Tab[0])) &&
+        ((LB0_uy < 0) || inVoronoi(a[0], b[0], -A1_dot_B0, -Tab[1], A0_dot_B0,
+                                   Tab[0], Tba[0]))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, Tab[0], Tba[0]);
 
       D[0] = Tab[0] + Rab(0, 0) * u - t;
       D[1] = Tab[1] + Rab(1, 0) * u;
       D[2] = Tab[2] + Rab(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1153,58 +974,46 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
   S sep1, sep2;
 
-  if(Tab[2] > 0.0)
-  {
+  if (Tab[2] > 0.0) {
     sep1 = Tab[2];
     if (Rab(2, 0) < 0.0) sep1 += b[0] * Rab(2, 0);
     if (Rab(2, 1) < 0.0) sep1 += b[1] * Rab(2, 1);
-  }
-  else
-  {
+  } else {
     sep1 = -Tab[2];
     if (Rab(2, 0) > 0.0) sep1 -= b[0] * Rab(2, 0);
     if (Rab(2, 1) > 0.0) sep1 -= b[1] * Rab(2, 1);
   }
 
-  if(Tba[2] < 0)
-  {
+  if (Tba[2] < 0) {
     sep2 = -Tba[2];
     if (Rab(0, 2) < 0.0) sep2 += a[0] * Rab(0, 2);
     if (Rab(1, 2) < 0.0) sep2 += a[1] * Rab(1, 2);
-  }
-  else
-  {
+  } else {
     sep2 = Tba[2];
     if (Rab(0, 2) > 0.0) sep2 -= a[0] * Rab(0, 2);
     if (Rab(1, 2) > 0.0) sep2 -= a[1] * Rab(1, 2);
   }
 
-  if(sep1 >= sep2 && sep1 >= 0)
-  {
-    if(Tab[2] > 0)
+  if (sep1 >= sep2 && sep1 >= 0) {
+    if (Tab[2] > 0)
       D << 0, 0, sep1;
     else
       D << 0, 0, -sep1;
 
-    if(P && Q)
-    {
+    if (P && Q) {
       *Q = D;
       P->setZero();
     }
   }
 
-  if(sep2 >= sep1 && sep2 >= 0)
-  {
+  if (sep2 >= sep1 && sep2 >= 0) {
     Vector3<S> Q_(Tab[0], Tab[1], Tab[2]);
     Vector3<S> P_;
-    if(Tba[2] < 0)
-    {
+    if (Tba[2] < 0) {
       P_[0] = Rab(0, 2) * sep2 + Tab[0];
       P_[1] = Rab(1, 2) * sep2 + Tab[1];
       P_[2] = Rab(2, 2) * sep2 + Tab[2];
-    }
-    else
-    {
+    } else {
       P_[0] = -Rab(0, 2) * sep2 + Tab[0];
       P_[1] = -Rab(1, 2) * sep2 + Tab[1];
       P_[2] = -Rab(2, 2) * sep2 + Tab[2];
@@ -1212,8 +1021,7 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
     D = Q_ - P_;
 
-    if(P && Q)
-    {
+    if (P && Q) {
       *P = P_;
       *Q = Q_;
     }
@@ -1225,13 +1033,8 @@ S rectDistance(const Matrix3<S>& Rab, Vector3<S> const& Tab, const S a[2], const
 
 //==============================================================================
 template <typename S>
-S rectDistance(
-    const Transform3<S>& tfab,
-    const S a[2],
-    const S b[2],
-    Vector3<S>* P,
-    Vector3<S>* Q)
-{
+S rectDistance(const Transform3<S>& tfab, const S a[2], const S b[2],
+               Vector3<S>* P, Vector3<S>* Q) {
   S A0_dot_B0 = tfab.linear()(0, 0);
   S A0_dot_B1 = tfab.linear()(0, 1);
   S A1_dot_B0 = tfab.linear()(1, 0);
@@ -1260,15 +1063,12 @@ S rectDistance(
   S AUL_x = ALL_x + aA0_dot_B0;
   S AUU_x = ALU_x + aA0_dot_B0;
 
-  if(ALL_x < ALU_x)
-  {
+  if (ALL_x < ALU_x) {
     LA1_lx = ALL_x;
     LA1_ux = ALU_x;
     UA1_lx = AUL_x;
     UA1_ux = AUU_x;
-  }
-  else
-  {
+  } else {
     LA1_lx = ALU_x;
     LA1_ux = ALL_x;
     UA1_lx = AUU_x;
@@ -1280,15 +1080,12 @@ S rectDistance(
   S BUL_x = BLL_x + bA0_dot_B0;
   S BUU_x = BLU_x + bA0_dot_B0;
 
-  if(BLL_x < BLU_x)
-  {
+  if (BLL_x < BLU_x) {
     LB1_lx = BLL_x;
     LB1_ux = BLU_x;
     UB1_lx = BUL_x;
     UB1_ux = BUU_x;
-  }
-  else
-  {
+  } else {
     LB1_lx = BLU_x;
     LB1_ux = BLL_x;
     UB1_lx = BUU_x;
@@ -1297,26 +1094,25 @@ S rectDistance(
 
   // UA1, UB1
 
-  if((UA1_ux > b[0]) && (UB1_ux > a[0]))
-  {
-    if(((UA1_lx > b[0]) ||
-        inVoronoi(b[1], a[1], A1_dot_B0, aA0_dot_B0 - b[0] - Tba[0],
-                  A1_dot_B1, aA0_dot_B1 - Tba[1],
-                  -tfab.translation()[1] - bA1_dot_B0))
-       &&
-       ((UB1_lx > a[0]) ||
-        inVoronoi(a[1], b[1], A0_dot_B1, tfab.translation()[0] + bA0_dot_B0 - a[0],
-                  A1_dot_B1, tfab.translation()[1] + bA1_dot_B0, Tba[1] - aA0_dot_B1)))
-    {
+  if ((UA1_ux > b[0]) && (UB1_ux > a[0])) {
+    if (((UA1_lx > b[0]) ||
+         inVoronoi(b[1], a[1], A1_dot_B0, aA0_dot_B0 - b[0] - Tba[0], A1_dot_B1,
+                   aA0_dot_B1 - Tba[1], -tfab.translation()[1] - bA1_dot_B0)) &&
+        ((UB1_lx > a[0]) ||
+         inVoronoi(a[1], b[1], A0_dot_B1,
+                   tfab.translation()[0] + bA0_dot_B0 - a[0], A1_dot_B1,
+                   tfab.translation()[1] + bA1_dot_B0, Tba[1] - aA0_dot_B1))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1] + bA1_dot_B0,
                 Tba[1] - aA0_dot_B1);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] + tfab.linear()(0, 1) * u - a[0] ;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] + tfab.linear()(1, 1) * u - t;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] + tfab.linear()(2, 1) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] +
+             tfab.linear()(0, 1) * u - a[0];
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] +
+             tfab.linear()(1, 1) * u - t;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] +
+             tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -1325,27 +1121,23 @@ S rectDistance(
     }
   }
 
-
   // UA1, LB1
 
-  if((UA1_lx < 0) && (LB1_ux > a[0]))
-  {
-    if(((UA1_ux < 0) ||
-        inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0] - aA0_dot_B0,
-                  A1_dot_B1, aA0_dot_B1 - Tba[1], -tfab.translation()[1]))
-       &&
-       ((LB1_lx > a[0]) ||
-        inVoronoi(a[1], b[1], A0_dot_B1, tfab.translation()[0] - a[0],
-                  A1_dot_B1, tfab.translation()[1], Tba[1] - aA0_dot_B1)))
-    {
-      segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1], Tba[1] - aA0_dot_B1);
+  if ((UA1_lx < 0) && (LB1_ux > a[0])) {
+    if (((UA1_ux < 0) ||
+         inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0] - aA0_dot_B0, A1_dot_B1,
+                   aA0_dot_B1 - Tba[1], -tfab.translation()[1])) &&
+        ((LB1_lx > a[0]) ||
+         inVoronoi(a[1], b[1], A0_dot_B1, tfab.translation()[0] - a[0],
+                   A1_dot_B1, tfab.translation()[1], Tba[1] - aA0_dot_B1))) {
+      segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1],
+                Tba[1] - aA0_dot_B1);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * u - a[0];
       D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * u - t;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -1356,24 +1148,24 @@ S rectDistance(
 
   // LA1, UB1
 
-  if((LA1_ux > b[0]) && (UB1_lx < 0))
-  {
-    if(((LA1_lx > b[0]) ||
-        inVoronoi(b[1], a[1], A1_dot_B0, -Tba[0] - b[0],
-                  A1_dot_B1, -Tba[1], -tfab.translation()[1] - bA1_dot_B0))
-       &&
-       ((UB1_ux < 0) ||
-        inVoronoi(a[1], b[1], -A0_dot_B1, -tfab.translation()[0] - bA0_dot_B0,
-                  A1_dot_B1, tfab.translation()[1] + bA1_dot_B0, Tba[1])))
-    {
-      segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1] + bA1_dot_B0, Tba[1]);
+  if ((LA1_ux > b[0]) && (UB1_lx < 0)) {
+    if (((LA1_lx > b[0]) ||
+         inVoronoi(b[1], a[1], A1_dot_B0, -Tba[0] - b[0], A1_dot_B1, -Tba[1],
+                   -tfab.translation()[1] - bA1_dot_B0)) &&
+        ((UB1_ux < 0) ||
+         inVoronoi(a[1], b[1], -A0_dot_B1, -tfab.translation()[0] - bA0_dot_B0,
+                   A1_dot_B1, tfab.translation()[1] + bA1_dot_B0, Tba[1]))) {
+      segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1] + bA1_dot_B0,
+                Tba[1]);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] + tfab.linear()(0, 1) * u;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] + tfab.linear()(1, 1) * u - t;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] + tfab.linear()(2, 1) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] +
+             tfab.linear()(0, 1) * u;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] +
+             tfab.linear()(1, 1) * u - t;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] +
+             tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -1384,24 +1176,19 @@ S rectDistance(
 
   // LA1, LB1
 
-  if((LA1_lx < 0) && (LB1_lx < 0))
-  {
-    if (((LA1_ux < 0) ||
-         inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0], A1_dot_B1,
-                   -Tba[1], -tfab.translation()[1]))
-        &&
+  if ((LA1_lx < 0) && (LB1_lx < 0)) {
+    if (((LA1_ux < 0) || inVoronoi(b[1], a[1], -A1_dot_B0, Tba[0], A1_dot_B1,
+                                   -Tba[1], -tfab.translation()[1])) &&
         ((LB1_ux < 0) ||
          inVoronoi(a[1], b[1], -A0_dot_B1, -tfab.translation()[0], A1_dot_B1,
-                   tfab.translation()[1], Tba[1])))
-    {
+                   tfab.translation()[1], Tba[1]))) {
       segCoords(t, u, a[1], b[1], A1_dot_B1, tfab.translation()[1], Tba[1]);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * u;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * u - t;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -1419,30 +1206,24 @@ S rectDistance(
 
   S LA1_ly, LA1_uy, UA1_ly, UA1_uy, LB0_lx, LB0_ux, UB0_lx, UB0_ux;
 
-  if(ALL_y < ALU_y)
-  {
+  if (ALL_y < ALU_y) {
     LA1_ly = ALL_y;
     LA1_uy = ALU_y;
     UA1_ly = AUL_y;
     UA1_uy = AUU_y;
-  }
-  else
-  {
+  } else {
     LA1_ly = ALU_y;
     LA1_uy = ALL_y;
     UA1_ly = AUU_y;
     UA1_uy = AUL_y;
   }
 
-  if(BLL_x < BUL_x)
-  {
+  if (BLL_x < BUL_x) {
     LB0_lx = BLL_x;
     LB0_ux = BUL_x;
     UB0_lx = BLU_x;
     UB0_ux = BUU_x;
-  }
-  else
-  {
+  } else {
     LB0_lx = BUL_x;
     LB0_ux = BLL_x;
     UB0_lx = BUU_x;
@@ -1451,25 +1232,25 @@ S rectDistance(
 
   // UA1, UB0
 
-  if((UA1_uy > b[1]) && (UB0_ux > a[0]))
-  {
-    if(((UA1_ly > b[1]) ||
-        inVoronoi(b[0], a[1], A1_dot_B1, aA0_dot_B1 - Tba[1] - b[1],
-                  A1_dot_B0, aA0_dot_B0 - Tba[0], -tfab.translation()[1] - bA1_dot_B1))
-       &&
-       ((UB0_lx > a[0]) ||
-        inVoronoi(a[1], b[0], A0_dot_B0, tfab.translation()[0] - a[0] + bA0_dot_B1,
-                  A1_dot_B0, tfab.translation()[1] + bA1_dot_B1, Tba[0] - aA0_dot_B0)))
-    {
+  if ((UA1_uy > b[1]) && (UB0_ux > a[0])) {
+    if (((UA1_ly > b[1]) ||
+         inVoronoi(b[0], a[1], A1_dot_B1, aA0_dot_B1 - Tba[1] - b[1], A1_dot_B0,
+                   aA0_dot_B0 - Tba[0], -tfab.translation()[1] - bA1_dot_B1)) &&
+        ((UB0_lx > a[0]) ||
+         inVoronoi(a[1], b[0], A0_dot_B0,
+                   tfab.translation()[0] - a[0] + bA0_dot_B1, A1_dot_B0,
+                   tfab.translation()[1] + bA1_dot_B1, Tba[0] - aA0_dot_B0))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1] + bA1_dot_B1,
                 Tba[0] - aA0_dot_B0);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] + tfab.linear()(0, 0) * u - a[0] ;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] + tfab.linear()(1, 0) * u - t;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] + tfab.linear()(2, 0) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] +
+             tfab.linear()(0, 0) * u - a[0];
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] +
+             tfab.linear()(1, 0) * u - t;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] +
+             tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -1480,24 +1261,21 @@ S rectDistance(
 
   // UA1, LB0
 
-  if((UA1_ly < 0) && (LB0_ux > a[0]))
-  {
-    if(((UA1_uy < 0) ||
-        inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1] - aA0_dot_B1, A1_dot_B0,
-                  aA0_dot_B0 - Tba[0], -tfab.translation()[1]))
-       &&
-       ((LB0_lx > a[0]) ||
-        inVoronoi(a[1], b[0], A0_dot_B0, tfab.translation()[0] - a[0],
-                  A1_dot_B0, tfab.translation()[1], Tba[0] - aA0_dot_B0)))
-    {
-      segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1], Tba[0] - aA0_dot_B0);
+  if ((UA1_ly < 0) && (LB0_ux > a[0])) {
+    if (((UA1_uy < 0) ||
+         inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1] - aA0_dot_B1, A1_dot_B0,
+                   aA0_dot_B0 - Tba[0], -tfab.translation()[1])) &&
+        ((LB0_lx > a[0]) ||
+         inVoronoi(a[1], b[0], A0_dot_B0, tfab.translation()[0] - a[0],
+                   A1_dot_B0, tfab.translation()[1], Tba[0] - aA0_dot_B0))) {
+      segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1],
+                Tba[0] - aA0_dot_B0);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * u - a[0];
       D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * u - t;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << a[0], t, 0;
         *Q = D + (*P);
       }
@@ -1508,29 +1286,28 @@ S rectDistance(
 
   // LA1, UB0
 
-  if((LA1_uy > b[1]) && (UB0_lx < 0))
-  {
-    if(((LA1_ly > b[1]) ||
-        inVoronoi(b[0], a[1], A1_dot_B1, -Tba[1] - b[1],
-                  A1_dot_B0, -Tba[0], -tfab.translation()[1] - bA1_dot_B1))
-       &&
+  if ((LA1_uy > b[1]) && (UB0_lx < 0)) {
+    if (((LA1_ly > b[1]) ||
+         inVoronoi(b[0], a[1], A1_dot_B1, -Tba[1] - b[1], A1_dot_B0, -Tba[0],
+                   -tfab.translation()[1] - bA1_dot_B1)) &&
 
-       ((UB0_ux < 0) ||
-        inVoronoi(a[1], b[0], -A0_dot_B0, -tfab.translation()[0] - bA0_dot_B1, A1_dot_B0,
-                  tfab.translation()[1] + bA1_dot_B1, Tba[0])))
-    {
-      segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1] + bA1_dot_B1, Tba[0]);
+        ((UB0_ux < 0) ||
+         inVoronoi(a[1], b[0], -A0_dot_B0, -tfab.translation()[0] - bA0_dot_B1,
+                   A1_dot_B0, tfab.translation()[1] + bA1_dot_B1, Tba[0]))) {
+      segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1] + bA1_dot_B1,
+                Tba[0]);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] + tfab.linear()(0, 0) * u;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] + tfab.linear()(1, 0) * u - t;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] + tfab.linear()(2, 0) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] +
+             tfab.linear()(0, 0) * u;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] +
+             tfab.linear()(1, 0) * u - t;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] +
+             tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
-
 
       return D.norm();
     }
@@ -1538,24 +1315,19 @@ S rectDistance(
 
   // LA1, LB0
 
-  if((LA1_ly < 0) && (LB0_lx < 0))
-  {
-    if(((LA1_uy < 0) ||
-        inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1], A1_dot_B0,
-                  -Tba[0], -tfab.translation()[1]))
-       &&
-       ((LB0_ux < 0) ||
-        inVoronoi(a[1], b[0], -A0_dot_B0, -tfab.translation()[0], A1_dot_B0,
-                  tfab.translation()[1], Tba[0])))
-    {
+  if ((LA1_ly < 0) && (LB0_lx < 0)) {
+    if (((LA1_uy < 0) || inVoronoi(b[0], a[1], -A1_dot_B1, Tba[1], A1_dot_B0,
+                                   -Tba[0], -tfab.translation()[1])) &&
+        ((LB0_ux < 0) ||
+         inVoronoi(a[1], b[0], -A0_dot_B0, -tfab.translation()[0], A1_dot_B0,
+                   tfab.translation()[1], Tba[0]))) {
       segCoords(t, u, a[1], b[0], A1_dot_B0, tfab.translation()[1], Tba[0]);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * u;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * u - t;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * u;
 
-      if(P&& Q)
-      {
+      if (P && Q) {
         *P << 0, t, 0;
         *Q = D + (*P);
       }
@@ -1573,30 +1345,24 @@ S rectDistance(
 
   S LA0_lx, LA0_ux, UA0_lx, UA0_ux, LB1_ly, LB1_uy, UB1_ly, UB1_uy;
 
-  if(ALL_x < AUL_x)
-  {
+  if (ALL_x < AUL_x) {
     LA0_lx = ALL_x;
     LA0_ux = AUL_x;
     UA0_lx = ALU_x;
     UA0_ux = AUU_x;
-  }
-  else
-  {
+  } else {
     LA0_lx = AUL_x;
     LA0_ux = ALL_x;
     UA0_lx = AUU_x;
     UA0_ux = ALU_x;
   }
 
-  if(BLL_y < BLU_y)
-  {
+  if (BLL_y < BLU_y) {
     LB1_ly = BLL_y;
     LB1_uy = BLU_y;
     UB1_ly = BUL_y;
     UB1_uy = BUU_y;
-  }
-  else
-  {
+  } else {
     LB1_ly = BLU_y;
     LB1_uy = BLL_y;
     UB1_ly = BUU_y;
@@ -1605,25 +1371,25 @@ S rectDistance(
 
   // UA0, UB1
 
-  if((UA0_ux > b[0]) && (UB1_uy > a[1]))
-  {
-    if(((UA0_lx > b[0]) ||
-        inVoronoi(b[1], a[0], A0_dot_B0, aA1_dot_B0 - Tba[0] - b[0],
-                  A0_dot_B1, aA1_dot_B1 - Tba[1], -tfab.translation()[0] - bA0_dot_B0))
-       &&
-       ((UB1_ly > a[1]) ||
-        inVoronoi(a[0], b[1], A1_dot_B1, tfab.translation()[1] - a[1] + bA1_dot_B0,
-                  A0_dot_B1, tfab.translation()[0] + bA0_dot_B0, Tba[1] - aA1_dot_B1)))
-    {
+  if ((UA0_ux > b[0]) && (UB1_uy > a[1])) {
+    if (((UA0_lx > b[0]) ||
+         inVoronoi(b[1], a[0], A0_dot_B0, aA1_dot_B0 - Tba[0] - b[0], A0_dot_B1,
+                   aA1_dot_B1 - Tba[1], -tfab.translation()[0] - bA0_dot_B0)) &&
+        ((UB1_ly > a[1]) ||
+         inVoronoi(a[0], b[1], A1_dot_B1,
+                   tfab.translation()[1] - a[1] + bA1_dot_B0, A0_dot_B1,
+                   tfab.translation()[0] + bA0_dot_B0, Tba[1] - aA1_dot_B1))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0] + bA0_dot_B0,
                 Tba[1] - aA1_dot_B1);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] + tfab.linear()(0, 1) * u - t;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] + tfab.linear()(1, 1) * u - a[1];
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] + tfab.linear()(2, 1) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] +
+             tfab.linear()(0, 1) * u - t;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] +
+             tfab.linear()(1, 1) * u - a[1];
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] +
+             tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1634,24 +1400,21 @@ S rectDistance(
 
   // UA0, LB1
 
-  if((UA0_lx < 0) && (LB1_uy > a[1]))
-  {
-    if(((UA0_ux < 0) ||
-        inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0] - aA1_dot_B0, A0_dot_B1,
-                  aA1_dot_B1 - Tba[1], -tfab.translation()[0]))
-       &&
-       ((LB1_ly > a[1]) ||
-        inVoronoi(a[0], b[1], A1_dot_B1, tfab.translation()[1] - a[1], A0_dot_B1, tfab.translation()[0],
-                  Tba[1] - aA1_dot_B1)))
-    {
-      segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0], Tba[1] - aA1_dot_B1);
+  if ((UA0_lx < 0) && (LB1_uy > a[1])) {
+    if (((UA0_ux < 0) ||
+         inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0] - aA1_dot_B0, A0_dot_B1,
+                   aA1_dot_B1 - Tba[1], -tfab.translation()[0])) &&
+        ((LB1_ly > a[1]) ||
+         inVoronoi(a[0], b[1], A1_dot_B1, tfab.translation()[1] - a[1],
+                   A0_dot_B1, tfab.translation()[0], Tba[1] - aA1_dot_B1))) {
+      segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0],
+                Tba[1] - aA1_dot_B1);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * u - t;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * u - a[1];
       D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1662,24 +1425,24 @@ S rectDistance(
 
   // LA0, UB1
 
-  if((LA0_ux > b[0]) && (UB1_ly < 0))
-  {
-    if(((LA0_lx > b[0]) ||
-        inVoronoi(b[1], a[0], A0_dot_B0, -b[0] - Tba[0], A0_dot_B1, -Tba[1],
-                  -bA0_dot_B0 - tfab.translation()[0]))
-       &&
-       ((UB1_uy < 0) ||
-        inVoronoi(a[0], b[1], -A1_dot_B1, -tfab.translation()[1] - bA1_dot_B0, A0_dot_B1,
-                  tfab.translation()[0] + bA0_dot_B0, Tba[1])))
-    {
-      segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0] + bA0_dot_B0, Tba[1]);
+  if ((LA0_ux > b[0]) && (UB1_ly < 0)) {
+    if (((LA0_lx > b[0]) ||
+         inVoronoi(b[1], a[0], A0_dot_B0, -b[0] - Tba[0], A0_dot_B1, -Tba[1],
+                   -bA0_dot_B0 - tfab.translation()[0])) &&
+        ((UB1_uy < 0) ||
+         inVoronoi(a[0], b[1], -A1_dot_B1, -tfab.translation()[1] - bA1_dot_B0,
+                   A0_dot_B1, tfab.translation()[0] + bA0_dot_B0, Tba[1]))) {
+      segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0] + bA0_dot_B0,
+                Tba[1]);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] + tfab.linear()(0, 1) * u - t;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] + tfab.linear()(1, 1) * u;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] + tfab.linear()(2, 1) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * b[0] +
+             tfab.linear()(0, 1) * u - t;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * b[0] +
+             tfab.linear()(1, 1) * u;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * b[0] +
+             tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1690,24 +1453,19 @@ S rectDistance(
 
   // LA0, LB1
 
-  if((LA0_lx < 0) && (LB1_ly < 0))
-  {
-    if(((LA0_ux < 0) ||
-        inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0], A0_dot_B1, -Tba[1],
-                  -tfab.translation()[0]))
-       &&
-       ((LB1_uy < 0) ||
-        inVoronoi(a[0], b[1], -A1_dot_B1, -tfab.translation()[1], A0_dot_B1,
-                  tfab.translation()[0], Tba[1])))
-    {
+  if ((LA0_lx < 0) && (LB1_ly < 0)) {
+    if (((LA0_ux < 0) || inVoronoi(b[1], a[0], -A0_dot_B0, Tba[0], A0_dot_B1,
+                                   -Tba[1], -tfab.translation()[0])) &&
+        ((LB1_uy < 0) ||
+         inVoronoi(a[0], b[1], -A1_dot_B1, -tfab.translation()[1], A0_dot_B1,
+                   tfab.translation()[0], Tba[1]))) {
       segCoords(t, u, a[0], b[1], A0_dot_B1, tfab.translation()[0], Tba[1]);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * u - t;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * u;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1718,30 +1476,24 @@ S rectDistance(
 
   S LA0_ly, LA0_uy, UA0_ly, UA0_uy, LB0_ly, LB0_uy, UB0_ly, UB0_uy;
 
-  if(ALL_y < AUL_y)
-  {
+  if (ALL_y < AUL_y) {
     LA0_ly = ALL_y;
     LA0_uy = AUL_y;
     UA0_ly = ALU_y;
     UA0_uy = AUU_y;
-  }
-  else
-  {
+  } else {
     LA0_ly = AUL_y;
     LA0_uy = ALL_y;
     UA0_ly = AUU_y;
     UA0_uy = ALU_y;
   }
 
-  if(BLL_y < BUL_y)
-  {
+  if (BLL_y < BUL_y) {
     LB0_ly = BLL_y;
     LB0_uy = BUL_y;
     UB0_ly = BLU_y;
     UB0_uy = BUU_y;
-  }
-  else
-  {
+  } else {
     LB0_ly = BUL_y;
     LB0_uy = BLL_y;
     UB0_ly = BUU_y;
@@ -1750,25 +1502,25 @@ S rectDistance(
 
   // UA0, UB0
 
-  if((UA0_uy > b[1]) && (UB0_uy > a[1]))
-  {
-    if(((UA0_ly > b[1]) ||
-        inVoronoi(b[0], a[0], A0_dot_B1, aA1_dot_B1 - Tba[1] - b[1],
-                  A0_dot_B0, aA1_dot_B0 - Tba[0], -tfab.translation()[0] - bA0_dot_B1))
-       &&
-       ((UB0_ly > a[1]) ||
-        inVoronoi(a[0], b[0], A1_dot_B0, tfab.translation()[1] - a[1] + bA1_dot_B1, A0_dot_B0,
-                  tfab.translation()[0] + bA0_dot_B1, Tba[0] - aA1_dot_B0)))
-    {
+  if ((UA0_uy > b[1]) && (UB0_uy > a[1])) {
+    if (((UA0_ly > b[1]) ||
+         inVoronoi(b[0], a[0], A0_dot_B1, aA1_dot_B1 - Tba[1] - b[1], A0_dot_B0,
+                   aA1_dot_B0 - Tba[0], -tfab.translation()[0] - bA0_dot_B1)) &&
+        ((UB0_ly > a[1]) ||
+         inVoronoi(a[0], b[0], A1_dot_B0,
+                   tfab.translation()[1] - a[1] + bA1_dot_B1, A0_dot_B0,
+                   tfab.translation()[0] + bA0_dot_B1, Tba[0] - aA1_dot_B0))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0] + bA0_dot_B1,
                 Tba[0] - aA1_dot_B0);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] + tfab.linear()(0, 0) * u - t;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] + tfab.linear()(1, 0) * u - a[1];
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] + tfab.linear()(2, 0) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] +
+             tfab.linear()(0, 0) * u - t;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] +
+             tfab.linear()(1, 0) * u - a[1];
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] +
+             tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1779,24 +1531,21 @@ S rectDistance(
 
   // UA0, LB0
 
-  if((UA0_ly < 0) && (LB0_uy > a[1]))
-  {
-    if(((UA0_uy < 0) ||
-        inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1] - aA1_dot_B1, A0_dot_B0,
-                  aA1_dot_B0 - Tba[0], -tfab.translation()[0]))
-       &&
-       ((LB0_ly > a[1]) ||
-        inVoronoi(a[0], b[0], A1_dot_B0, tfab.translation()[1] - a[1],
-                  A0_dot_B0, tfab.translation()[0], Tba[0] - aA1_dot_B0)))
-    {
-      segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0], Tba[0] - aA1_dot_B0);
+  if ((UA0_ly < 0) && (LB0_uy > a[1])) {
+    if (((UA0_uy < 0) ||
+         inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1] - aA1_dot_B1, A0_dot_B0,
+                   aA1_dot_B0 - Tba[0], -tfab.translation()[0])) &&
+        ((LB0_ly > a[1]) ||
+         inVoronoi(a[0], b[0], A1_dot_B0, tfab.translation()[1] - a[1],
+                   A0_dot_B0, tfab.translation()[0], Tba[0] - aA1_dot_B0))) {
+      segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0],
+                Tba[0] - aA1_dot_B0);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * u - t;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * u - a[1];
       D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, a[1], 0;
         *Q = D + (*P);
       }
@@ -1807,25 +1556,25 @@ S rectDistance(
 
   // LA0, UB0
 
-  if((LA0_uy > b[1]) && (UB0_ly < 0))
-  {
-    if(((LA0_ly > b[1]) ||
-        inVoronoi(b[0], a[0], A0_dot_B1, -Tba[1] - b[1], A0_dot_B0, -Tba[0],
-                  -tfab.translation()[0] - bA0_dot_B1))
-       &&
+  if ((LA0_uy > b[1]) && (UB0_ly < 0)) {
+    if (((LA0_ly > b[1]) ||
+         inVoronoi(b[0], a[0], A0_dot_B1, -Tba[1] - b[1], A0_dot_B0, -Tba[0],
+                   -tfab.translation()[0] - bA0_dot_B1)) &&
 
-       ((UB0_uy < 0) ||
-        inVoronoi(a[0], b[0], -A1_dot_B0, -tfab.translation()[1] - bA1_dot_B1, A0_dot_B0,
-                  tfab.translation()[0] + bA0_dot_B1, Tba[0])))
-    {
-      segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0] + bA0_dot_B1, Tba[0]);
+        ((UB0_uy < 0) ||
+         inVoronoi(a[0], b[0], -A1_dot_B0, -tfab.translation()[1] - bA1_dot_B1,
+                   A0_dot_B0, tfab.translation()[0] + bA0_dot_B1, Tba[0]))) {
+      segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0] + bA0_dot_B1,
+                Tba[0]);
 
-      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] + tfab.linear()(0, 0) * u - t;
-      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] + tfab.linear()(1, 0) * u;
-      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] + tfab.linear()(2, 0) * u;
+      D[0] = tfab.translation()[0] + tfab.linear()(0, 1) * b[1] +
+             tfab.linear()(0, 0) * u - t;
+      D[1] = tfab.translation()[1] + tfab.linear()(1, 1) * b[1] +
+             tfab.linear()(1, 0) * u;
+      D[2] = tfab.translation()[2] + tfab.linear()(2, 1) * b[1] +
+             tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1836,24 +1585,19 @@ S rectDistance(
 
   // LA0, LB0
 
-  if((LA0_ly < 0) && (LB0_ly < 0))
-  {
-    if(((LA0_uy < 0) ||
-        inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1], A0_dot_B0,
-                  -Tba[0], -tfab.translation()[0]))
-       &&
-       ((LB0_uy < 0) ||
-        inVoronoi(a[0], b[0], -A1_dot_B0, -tfab.translation()[1], A0_dot_B0,
-                  tfab.translation()[0], Tba[0])))
-    {
+  if ((LA0_ly < 0) && (LB0_ly < 0)) {
+    if (((LA0_uy < 0) || inVoronoi(b[0], a[0], -A0_dot_B1, Tba[1], A0_dot_B0,
+                                   -Tba[0], -tfab.translation()[0])) &&
+        ((LB0_uy < 0) ||
+         inVoronoi(a[0], b[0], -A1_dot_B0, -tfab.translation()[1], A0_dot_B0,
+                   tfab.translation()[0], Tba[0]))) {
       segCoords(t, u, a[0], b[0], A0_dot_B0, tfab.translation()[0], Tba[0]);
 
       D[0] = tfab.translation()[0] + tfab.linear()(0, 0) * u - t;
       D[1] = tfab.translation()[1] + tfab.linear()(1, 0) * u;
       D[2] = tfab.translation()[2] + tfab.linear()(2, 0) * u;
 
-      if(P && Q)
-      {
+      if (P && Q) {
         *P << t, 0, 0;
         *Q = D + (*P);
       }
@@ -1866,65 +1610,52 @@ S rectDistance(
 
   S sep1, sep2;
 
-  if(tfab.translation()[2] > 0.0)
-  {
+  if (tfab.translation()[2] > 0.0) {
     sep1 = tfab.translation()[2];
     if (tfab.linear()(2, 0) < 0.0) sep1 += b[0] * tfab.linear()(2, 0);
     if (tfab.linear()(2, 1) < 0.0) sep1 += b[1] * tfab.linear()(2, 1);
-  }
-  else
-  {
+  } else {
     sep1 = -tfab.translation()[2];
     if (tfab.linear()(2, 0) > 0.0) sep1 -= b[0] * tfab.linear()(2, 0);
     if (tfab.linear()(2, 1) > 0.0) sep1 -= b[1] * tfab.linear()(2, 1);
   }
 
-  if(Tba[2] < 0)
-  {
+  if (Tba[2] < 0) {
     sep2 = -Tba[2];
     if (tfab.linear()(0, 2) < 0.0) sep2 += a[0] * tfab.linear()(0, 2);
     if (tfab.linear()(1, 2) < 0.0) sep2 += a[1] * tfab.linear()(1, 2);
-  }
-  else
-  {
+  } else {
     sep2 = Tba[2];
     if (tfab.linear()(0, 2) > 0.0) sep2 -= a[0] * tfab.linear()(0, 2);
     if (tfab.linear()(1, 2) > 0.0) sep2 -= a[1] * tfab.linear()(1, 2);
   }
 
-  if(sep1 >= sep2 && sep1 >= 0)
-  {
-    if(tfab.translation()[2] > 0)
+  if (sep1 >= sep2 && sep1 >= 0) {
+    if (tfab.translation()[2] > 0)
       D << 0, 0, sep1;
     else
       D << 0, 0, -sep1;
 
-    if(P && Q)
-    {
+    if (P && Q) {
       *Q = D;
       P->setZero();
     }
   }
 
-  if(sep2 >= sep1 && sep2 >= 0)
-  {
+  if (sep2 >= sep1 && sep2 >= 0) {
     Vector3<S> Q_(tfab.translation());
     Vector3<S> P_;
-    if(Tba[2] < 0)
-    {
+    if (Tba[2] < 0) {
       P_.noalias() = tfab.linear().col(2) * sep2;
       P_.noalias() += tfab.translation();
-    }
-    else
-    {
+    } else {
       P_.noalias() = tfab.linear().col(2) * -sep2;
       P_.noalias() += tfab.translation();
     }
 
     D = Q_ - P_;
 
-    if(P && Q)
-    {
+    if (P && Q) {
       *P = P_;
       *Q = Q_;
     }
@@ -1936,12 +1667,9 @@ S rectDistance(
 
 //==============================================================================
 template <typename S, typename DerivedA, typename DerivedB>
-bool overlap(
-    const Eigen::MatrixBase<DerivedA>& R0,
-    const Eigen::MatrixBase<DerivedB>& T0,
-    const RSS<S>& b1,
-    const RSS<S>& b2)
-{
+bool overlap(const Eigen::MatrixBase<DerivedA>& R0,
+             const Eigen::MatrixBase<DerivedB>& T0, const RSS<S>& b1,
+             const RSS<S>& b2) {
   Matrix3<S> R0b2 = R0 * b2.axis;
   Matrix3<S> R = b1.axis.transpose() * R0b2;
 
@@ -1954,14 +1682,9 @@ bool overlap(
 
 //==============================================================================
 template <typename S, typename DerivedA, typename DerivedB>
-S distance(
-    const Eigen::MatrixBase<DerivedA>& R0,
-    const Eigen::MatrixBase<DerivedB>& T0,
-    const RSS<S>& b1,
-    const RSS<S>& b2,
-    Vector3<S>* P,
-    Vector3<S>* Q)
-{
+S distance(const Eigen::MatrixBase<DerivedA>& R0,
+           const Eigen::MatrixBase<DerivedB>& T0, const RSS<S>& b1,
+           const RSS<S>& b2, Vector3<S>* P, Vector3<S>* Q) {
   Matrix3<S> R0b2 = R0 * b2.axis;
   Matrix3<S> R = b1.axis.transpose() * R0b2;
 
@@ -1975,13 +1698,12 @@ S distance(
 
 //==============================================================================
 template <typename S>
-RSS<S> translate(const RSS<S>& bv, const Vector3<S>& t)
-{
+RSS<S> translate(const RSS<S>& bv, const Vector3<S>& t) {
   RSS<S> res(bv);
   res.To += t;
   return res;
 }
 
-} // namespace fcl
+}  // namespace fcl
 
 #endif
